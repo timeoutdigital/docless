@@ -1,0 +1,5 @@
+package swala
+
+trait Info {
+
+}
