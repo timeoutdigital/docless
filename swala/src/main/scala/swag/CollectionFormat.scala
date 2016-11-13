@@ -1,4 +1,4 @@
-package swala
+package swag
 
 import enumeratum._
 

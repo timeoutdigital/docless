@@ -1,9 +1,9 @@
-package swala
+package swag
 
 import org.scalatest.FreeSpec
 
-import swala.Info.License
-import swala.Responses.{Header, Response}
+import swag.Info.License
+import swag.Responses.{Header, Response}
 
 class SwaggerTest extends FreeSpec {
   "Can build and serialise a swagger object" in {

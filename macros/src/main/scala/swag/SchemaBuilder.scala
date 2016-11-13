@@ -1,4 +1,4 @@
-package swala
+package swag
 
 import io.circe.Json
 import scala.reflect.api.Universe

@@ -1,4 +1,4 @@
-package swala
+package swag
 
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
@@ -30,7 +30,7 @@ class JsonSchemaTest extends FreeSpec {
         parser.parse(
           """
             |{
-            |  "id": "swala.JsonSchemaTest.Foo",
+            |  "id": "swag.JsonSchemaTest.Foo",
             |  "required" : [
             |    "x",
             |    "y"
@@ -62,7 +62,7 @@ class JsonSchemaTest extends FreeSpec {
 
       parser.parse("""
         |{
-        |  "id" : "swala.JsonSchemaTest.X",
+        |  "id" : "swag.JsonSchemaTest.X",
         |  "type" : "object",
         |  "allOf" : [
         |    {

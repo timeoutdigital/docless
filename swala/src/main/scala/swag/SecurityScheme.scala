@@ -1,4 +1,4 @@
-package swala
+package swag
 
 import akka.http.scaladsl.model.Uri
 

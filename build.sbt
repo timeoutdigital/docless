@@ -1,4 +1,4 @@
-name := "swala"
+name := "swag"
 
 version := "1.0"
 
@@ -19,4 +19,4 @@ val commonSettings = Seq(
 //val paradise = "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full
 
 lazy val macros = project.in(file("macros")).settings(commonSettings : _*)
-lazy val swala = project.in(file("swala")).settings(commonSettings : _*).dependsOn(macros)
+lazy val swag = project.in(file("swag")).settings(commonSettings : _*).dependsOn(macros)

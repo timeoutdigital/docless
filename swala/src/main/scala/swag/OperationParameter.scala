@@ -1,4 +1,4 @@
-package swala
+package swag
 
 import scala.util.matching.Regex
 import enumeratum._

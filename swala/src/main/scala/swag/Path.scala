@@ -1,4 +1,4 @@
-package swala
+package swag
 
 case class Path(ref: String,
                 parameters: Option[OperationParameter] = None,

@@ -1,4 +1,4 @@
-package swala
+package swag
 
 case class APISchema(info: Info,
                      host: String,

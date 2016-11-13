@@ -1,4 +1,4 @@
-package swala
+package swag
 
 trait SecurityRequirement {
 

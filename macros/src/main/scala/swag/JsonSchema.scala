@@ -1,4 +1,4 @@
-package swala
+package swag
 
 import scala.reflect.macros.blackbox
 import scala.language.experimental.macros
