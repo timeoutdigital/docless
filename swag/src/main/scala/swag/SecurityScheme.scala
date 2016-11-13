@@ -1,6 +1,5 @@
 package swag
 
-import akka.http.scaladsl.model.Uri
 
 object SecurityScheme {
   object ApiKey {
@@ -32,7 +31,7 @@ case class ApiKey(name: String,
 
 case class OAuth2(name: String,
                   flow: SecurityScheme.OAuth2.Flow,
-                  autorizationUrl: Option[Uri] = None,
-                  tokenUrl: Option[Uri] = None,
+                  autorizationUrl: Option[String] = None,
+                  tokenUrl: Option[String] = None,
                   scopes: Map[String, String] = Map.empty,
                   description: Option[String] = None) extends SecurityScheme

@@ -3,23 +3,11 @@ package swag
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import io.circe._
+import swag.encoders.Primitives._
 import io.circe.syntax._
 import io.circe.parser._
 
 class JsonSchemaTest extends FreeSpec {
-  implicit val intSchema = new JsonSchema[Int] {
-    override def asJson = Map("type" -> "integer").asJson
-  }
-  implicit val strSchema = new JsonSchema[String] {
-    override def asJson = Map("type" -> "string").asJson
-  }
-  implicit val symSchema = new JsonSchema[Symbol] {
-    override def asJson = Map("type" -> "string").asJson
-  }
-  implicit def optSchema[A: JsonSchema] = new JsonSchema[Option[A]] {
-    override def asJson = implicitly[JsonSchema[A]].asJson
-  }
-
   "the genSchema macro" - {
     "generates schema instance " in {
       case class Foo(x: Int, y: String, z: Option[String], private val a: Int) {
@@ -37,7 +25,8 @@ class JsonSchemaTest extends FreeSpec {
             |  ],
             |  "properties" : {
             |    "x" : {
-            |      "type" : "integer"
+            |      "type" : "integer",
+            |      "format": "int32"
             |    },
             |    "y" : {
             |      "type" : "string"
@@ -48,13 +37,13 @@ class JsonSchemaTest extends FreeSpec {
             |  }
             |}
             |
-          """.stripMargin).toOption should === (Some(fooSchema.asJson))
+          """.stripMargin) should === (Right(fooSchema.asJson))
     }
 
     "generates a union schema using the allOf keyword" in {
       sealed trait X
-      case class Y(a: Int, b: String, c: Option[Int]) extends X
-      case class Z(d: String, e: Int) extends X
+      case class Y(a: Int, b: Char, c: Option[Double]) extends X
+      case class Z(d: Symbol, e: Long) extends X
 
       object X {
         val schema = JsonSchema.genSchema[X]
@@ -72,13 +61,15 @@ class JsonSchemaTest extends FreeSpec {
         |      ],
         |      "properties" : {
         |        "a" : {
-        |          "type" : "integer"
+        |          "type" : "integer",
+        |          "format": "int32"
         |        },
         |        "b" : {
         |          "type" : "string"
         |        },
         |        "c" : {
-        |          "type" : "integer"
+        |          "type" : "number",
+        |          "format": "double"
         |        }
         |      }
         |    },
@@ -92,13 +83,14 @@ class JsonSchemaTest extends FreeSpec {
         |          "type" : "string"
         |        },
         |        "e" : {
-        |          "type" : "integer"
+        |          "type" : "integer",
+        |          "format": "int64"
         |        }
         |      }
         |    }
         |  ]
         |}
-      """.stripMargin).toOption should === (Some(X.schema.asJson))
+      """.stripMargin) should === (Right(X.schema.asJson))
     }
   }
 }

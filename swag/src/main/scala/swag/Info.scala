@@ -1,15 +1,13 @@
 package swag
 
-import akka.http.scaladsl.model.Uri
-
 
 object Info {
   case class Contact(name: Option[String] = None,
-                     url: Option[Uri] = None,
+                     url: Option[String] = None,
                      email: Option[String] = None)
 
   case class License(name: String,
-                     url: Option[Uri] = None)
+                     url: Option[String] = None)
 }
 
 

@@ -4,8 +4,7 @@ import enumeratum._
 
 sealed trait Format extends EnumEntry with EnumEntry.Lowercase
 
-object Format extends Enum[Format] {
-
+object Format extends CirceEnum[Format] with Enum[Format] {
   case object Int32 extends Format
   case object Int64 extends Format
   case object Float extends Format

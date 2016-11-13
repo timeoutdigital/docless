@@ -4,7 +4,7 @@ import enumeratum._
 
 sealed trait Type extends EnumEntry with EnumEntry.Lowercase
 
-object Type extends Enum[Type] {
+object Type extends CirceEnum[Type] with Enum[Type] {
   case object String extends Type
   case object Number extends Type
   case object Integer extends Type

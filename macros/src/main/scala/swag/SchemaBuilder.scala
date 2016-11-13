@@ -1,6 +1,5 @@
 package swag
 
-import io.circe.Json
 import scala.reflect.api.Universe
 
 class SchemaBuilder[U <: Universe](val u: U) {
@@ -46,6 +45,6 @@ class SchemaBuilder[U <: Universe](val u: U) {
   private def isOptional(t: Type): Boolean = t match {
     case NullaryMethodType(TypeRef(ThisType(prefix), sym, _)) =>
       prefix.name.toString == "scala" && sym.name.toString == "Option"
-    case x => false
+    case _ => false
   }
 }

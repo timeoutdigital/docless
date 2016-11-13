@@ -1,11 +1,9 @@
 package swag
 
-import akka.http.scaladsl.model.MediaType
-
 case class Operation(responses: Responses,
                      parameters: List[OperationParameter] = Nil,
-                     consumes: Set[MediaType] = Set.empty,
-                     produces: Set[MediaType] = Set.empty,
+                     consumes: Set[String] = Set.empty,
+                     produces: Set[String] = Set.empty,
                      schemes: Set[Scheme] = Set.empty,
                      security: List[SecurityRequirement] = Nil,
                      deprecated: Boolean = false,

@@ -1,7 +1,5 @@
 package swag
 
-import akka.http.scaladsl.model.StatusCode
-
 object Responses {
   type HeaderName = String
   case class Header(`type`: Type,

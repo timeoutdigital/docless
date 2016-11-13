@@ -4,7 +4,7 @@ import enumeratum._
 
 sealed trait Scheme extends EnumEntry with EnumEntry.Lowercase
 
-object Scheme extends Enum[Scheme] {
+object Scheme extends CirceEnum[Scheme] with Enum[Scheme] {
   case object Http extends Scheme
   case object Https extends Scheme
   case object Ws extends Scheme

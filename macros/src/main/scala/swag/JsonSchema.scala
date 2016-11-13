@@ -10,6 +10,10 @@ trait JsonSchema[A] {
 }
 
 object JsonSchema {
+  def instance[A](obj: Json): JsonSchema[A] = new JsonSchema[A] {
+    override def asJson = obj
+  }
+
   def genSchema[T]: JsonSchema[T] = macro genSchemaImpl[T]
 
   def genSchemaImpl[T: c.WeakTypeTag](c: blackbox.Context): c.Expr[JsonSchema[T]] = {

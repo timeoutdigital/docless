@@ -4,8 +4,15 @@ import org.scalatest.FreeSpec
 
 import swag.Info.License
 import swag.Responses.{Header, Response}
+import swag.encoders.Swagger._
+import io.circe._
+import io.circe.syntax._
 
 class SwaggerTest extends FreeSpec {
+  "json encode formats" - {
+    val binary: Format = Format.Binary
+    println(s"got a format: ${binary.asJson}")
+  }
   "Can build and serialise a swagger object" in {
     APISchema(
       info = Info(title = "Swagger petstore", license = Some(License(name = "MIT"))),

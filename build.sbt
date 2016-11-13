@@ -2,7 +2,7 @@ name := "swag"
 
 version := "1.0"
 
-val circeVersion = "0.5.4"
+val circeVersion = "0.6.0"
 val enumeratumVersion = "1.5.1"
 
 val commonSettings = Seq(
@@ -10,8 +10,10 @@ val commonSettings = Seq(
   libraryDependencies ++= Seq(
     "org.scala-lang" % "scala-reflect" % scalaVersion.value,
     "com.beachape" %% "enumeratum" % enumeratumVersion,
+    "com.beachape" %% "enumeratum-circe" % enumeratumVersion,
     "io.circe" %% "circe-core" % circeVersion,
     "io.circe" %% "circe-parser" % circeVersion,
+    "io.circe" %% "circe-generic" % circeVersion,
     "org.scalatest" %% "scalatest" % "3.0.0" % "test"
   )
 )
