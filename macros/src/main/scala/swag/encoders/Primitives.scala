@@ -64,11 +64,4 @@ object Primitives {
 
   implicit def optSchema[A: JsonSchema]: JsonSchema[Option[A]] =
     instance[Option[A]](implicitly[JsonSchema[A]].asJson)
-
-  implicit def enumSchema[A <: EnumEntry](implicit ev: Enum[A]): JsonSchema[Enum[A]] =
-    instance[Enum[A]](Map(
-      "enum" -> Json.arr(
-        ev.values.map(e => Json.fromString(e.entryName)): _*
-      )
-    ).asJson)
 }

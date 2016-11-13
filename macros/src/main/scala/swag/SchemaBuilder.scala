@@ -1,5 +1,7 @@
 package swag
 
+import enumeratum.EnumEntry
+
 import scala.reflect.api.Universe
 
 class SchemaBuilder[U <: Universe](val u: U) {
@@ -9,7 +11,6 @@ class SchemaBuilder[U <: Universe](val u: U) {
     if (k.knownDirectSubclasses.isEmpty) None
     else {
       val props = k.knownDirectSubclasses.map(sk => properties(sk.typeSignature))
-
       val ast = q"""
         Json.obj(
           "type" -> Json.fromString("object"),
@@ -31,7 +32,13 @@ class SchemaBuilder[U <: Universe](val u: U) {
 
     val props = params.map { p =>
       val fieldType = p.typeSignature.finalResultType
-      q"${p.asTerm.name.toString} -> implicitly[JsonSchema[$fieldType]].asJson"
+      val fieldName = p.asTerm.name.toString
+      val fieldVal = if (fieldType <:< typeOf[EnumEntry])
+        enumEntry(fieldType, t)
+      else
+        q"implicitly[JsonSchema[$fieldType]].asJson"
+
+      q"$fieldName -> $fieldVal"
     }
 
     q"""
@@ -39,6 +46,20 @@ class SchemaBuilder[U <: Universe](val u: U) {
         "required" -> $required.asJson,
         "properties" -> Json.fromFields($props)
       )
+    """
+  }
+
+  private def enumEntry(t: Type, context: Type): Tree = {
+    val companion = t match {
+      case TypeRef(_, sym, _) => TermName(sym.name.toString)
+      case other => sys.error(s"Unable to handle $context member $t. Tree: ${showRaw(other)}")
+    }
+    q"""
+      Map(
+        "enum" -> Json.arr(
+          $companion.values.map(e => Json.fromString(e.entryName)): _*
+        )
+       ).asJson
     """
   }
 
