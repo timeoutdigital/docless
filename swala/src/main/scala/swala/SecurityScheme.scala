@@ -1,5 +1,7 @@
 package swala
 
+import akka.http.scaladsl.model.Uri
+
 object SecurityScheme {
   object ApiKey {
     sealed trait In
@@ -16,9 +18,6 @@ object SecurityScheme {
   }
 }
 
-import SecurityScheme._
-import akka.http.scaladsl.model.Uri
-
 sealed trait SecurityScheme {
   def description: Option[String]
   def name: String
@@ -28,11 +27,11 @@ case class Basic(name: String,
                  description: Option[String] = None) extends SecurityScheme
 
 case class ApiKey(name: String,
-                  in: ApiKey.In,
+                  in: SecurityScheme.ApiKey.In,
                   description: Option[String] = None) extends SecurityScheme
 
 case class OAuth2(name: String,
-                  flow: OAuth2.Flow,
+                  flow: SecurityScheme.OAuth2.Flow,
                   autorizationUrl: Option[Uri] = None,
                   tokenUrl: Option[Uri] = None,
                   scopes: Map[String, String] = Map.empty,

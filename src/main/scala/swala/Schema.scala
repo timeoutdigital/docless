@@ -1,3 +1,0 @@
-package swala
-
-trait Schema

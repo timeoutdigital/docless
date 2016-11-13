@@ -1,7 +1,7 @@
 package swala
 
 case class Path(ref: String,
-                parameters: Option[OperationParameter]
+                parameters: Option[OperationParameter] = None,
                 get: Option[Operation] = None,
                 put: Option[Operation] = None,
                 post: Option[Operation] = None,
