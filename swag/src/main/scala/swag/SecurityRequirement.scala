@@ -1,5 +1,3 @@
 package swag
 
-trait SecurityRequirement {
-
-}
+case class SecurityRequirement(bySchema: Map[String, List[String]])

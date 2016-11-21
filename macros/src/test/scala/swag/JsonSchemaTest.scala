@@ -135,10 +135,6 @@ class JsonSchemaTest extends FreeSpec {
         |  ]
         |}
       """.stripMargin) should === (Right(X.schema.asJson))
-
-
     }
-
-
   }
 }

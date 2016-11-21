@@ -9,12 +9,8 @@ import io.circe._
 import io.circe.syntax._
 
 class SwaggerTest extends FreeSpec {
-  "json encode formats" - {
-    val binary: Format = Format.Binary
-    println(s"got a format: ${binary.asJson}")
-  }
   "Can build and serialise a swagger object" in {
-    APISchema(
+    val schema = APISchema(
       info = Info(title = "Swagger petstore", license = Some(License(name = "MIT"))),
       host = "petstore.swagger.io",
       basePath  = "/v1",

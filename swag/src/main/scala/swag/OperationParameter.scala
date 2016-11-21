@@ -6,7 +6,7 @@ import enumeratum._
 object OperationParameter {
   sealed trait In extends EnumEntry with EnumEntry.Lowercase
 
-  object In extends Enum[In] {
+  object In extends Enum[In] with CirceEnum[In] {
     case object Path extends In
     case object Query extends In
     case object Header extends In
@@ -26,7 +26,6 @@ trait OperationParameter {
   def asNumber = as(Type.Number)
   def asFile = as(Type.File)
   def asBoolean = as(Type.Boolean)
-
 }
 
 case class BodyParameter(description: Option[String] = None,
@@ -44,8 +43,7 @@ case class ArrayParameter(name: String,
                           itemType: Type = Type.String,
                           collectionFormat: Option[CollectionFormat] = None,
                           minMax: Option[Range] = None,
-                          format: Option[Format] = None,
-                          default: Option[String] = None) extends OperationParameter {
+                          format: Option[Format] = None) extends OperationParameter {
 
   def as[T <: Type](t: T) = copy(`itemType` = t)
 
@@ -57,8 +55,7 @@ case class Parameter(name: String,
                      in: OperationParameter.In,
                      description: Option[String] = None,
                      `type`: Type = Type.String,
-                     format: Option[Format] = None,
-                     default: Option[String] = None ) extends OperationParameter {
+                     format: Option[Format] = None) extends OperationParameter {
 
   def as[T <: Type](t: T) = copy(`type` = t)
   override def mandatory = copy(required = true)
@@ -69,9 +66,8 @@ object Parameter {
             required: Boolean = false,
             description: Option[String] = None,
             `type`: Type = Type.String,
-            format: Option[Format] = None,
-            default: Option[String] = None ) =
-    apply(name, required = false, OperationParameter.In.Query, description, `type`, format, default)
+            format: Option[Format] = None) =
+    apply(name, required = false, OperationParameter.In.Query, description, `type`, format)
 
   def path(name: String,
            required: Boolean = false,
@@ -79,5 +75,5 @@ object Parameter {
            `type`: Type = Type.String,
            format: Option[Format] = None,
            default: Option[String] = None ) =
-    apply(name, required = false, OperationParameter.In.Path, description, `type`, format, default)
+    apply(name, required = false, OperationParameter.In.Path, description, `type`, format)
 }
