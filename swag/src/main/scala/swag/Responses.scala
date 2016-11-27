@@ -8,7 +8,7 @@ object Responses {
 
   case class Response(description: String,
                       headers: Map[HeaderName, Header] = Map.empty,
-                      schema: Option[SchemaDefinition] = None,
+                      schema: Option[JsonSchema.Ref] = None,
                       example: Option[String] = None)
 }
 

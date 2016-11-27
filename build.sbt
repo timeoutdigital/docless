@@ -2,7 +2,7 @@ name := "swag"
 
 version := "1.0"
 
-val circeVersion = "0.6.0"
+val circeVersion = "0.6.1"
 val enumeratumVersion = "1.5.1"
 
 val commonSettings = Seq(
@@ -14,7 +14,8 @@ val commonSettings = Seq(
     "io.circe" %% "circe-core" % circeVersion,
     "io.circe" %% "circe-parser" % circeVersion,
     "io.circe" %% "circe-generic" % circeVersion,
-    "org.scalatest" %% "scalatest" % "3.0.0" % "test"
+    "org.scalatest" %% "scalatest" % "3.0.0" % "test",
+    "com.github.fge" % "json-schema-validator" % "2.2.6" % "test"
   )
 )
 

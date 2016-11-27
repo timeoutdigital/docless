@@ -2,12 +2,14 @@ package swag.encoders
 
 import io.circe.{Encoder, Json}
 import io.circe.syntax._
+import swag.JsonSchema.{TypeRef, ArrayRef, Ref}
 import swag._
 
 import io.circe.generic.semiauto._
 import encoders.Primitives._
 
 object Swagger {
+
   implicit val externalDocsEncoder: Encoder[ExternalDocs] = deriveEncoder[ExternalDocs]
   implicit val contactEncoder: Encoder[Info.Contact] = deriveEncoder[Info.Contact]
   implicit val licenseEncoder: Encoder[Info.License] = deriveEncoder[Info.License]
@@ -63,21 +65,40 @@ object Swagger {
     common.deepMerge(other)
   }
 
-  implicit val schemaDefEnc = Encoder.instance[SchemaDefinition] { d =>
-    Json.obj("schema" -> Json.obj(
-      "$ref" -> d.ref.asJson
-    ))
+  implicit val definitionsEnc = Encoder.instance[Definitions] { defs =>
+    defs.get.map(d => d.id -> d.json).toMap.asJson
+  }
+
+  implicit val schemaRefEnc = Encoder.instance[JsonSchema.Ref] { d =>
+    val common = Json.obj(
+      "$ref" -> Json.fromString(s"#/definitions/${d.id}")
+    )
+    val arrayType = d match {
+      case ArrayRef(_) => Json.obj("type" -> Json.fromString("array"))
+      case _ => Json.obj()
+    }
+
+    common.deepMerge(arrayType)
   }
 
   implicit val headerEnc = deriveEncoder[Responses.Header]
   implicit val responseEnc = deriveEncoder[Responses.Response]
-  implicit val responsesEnc = deriveEncoder[Responses]
+  implicit val responsesEnc = Encoder.instance[Responses] { rs =>
+    rs.byStatusCode.map { case (code, resp) => code -> resp.asJson}.asJson
+  }
   implicit val securityReqEnc = Encoder.instance[SecurityRequirement] { sr =>
     Encoder[Map[String,List[String]]].apply(sr.bySchema)
   }
+  implicit val opParamsEnc = Encoder.instance[OperationParameters] { params =>
+    params.get.map(p => p.name -> p.asJson).toMap.asJson
+  }
+  implicit val operationEnc = deriveEncoder[Operation].mapJsonObject(_.remove("id"))
 
-  implicit val operationEnc = deriveEncoder[Operation]
+  implicit val pathEnc = deriveEncoder[Path].mapJsonObject(_.remove("id"))
 
-  implicit val pathEnc = deriveEncoder[Path]
+  implicit val pathsEnc = Encoder.instance[Paths] { paths =>
+    paths.get.map(d => d.id -> d.asJson).toMap.asJson
+  }
+
   implicit val apiSchema = deriveEncoder[APISchema]
 }

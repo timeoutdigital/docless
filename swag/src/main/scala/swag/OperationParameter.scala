@@ -31,7 +31,7 @@ trait OperationParameter {
 case class BodyParameter(description: Option[String] = None,
                          required: Boolean = false,
                          name: String = "body",
-                         schema: Option[SchemaDefinition] = None) extends OperationParameter {
+                         schema: Option[JsonSchema.Ref] = None) extends OperationParameter {
   override def mandatory = copy(required = true)
   override def as[T <: Type](t: T) = this
 }
@@ -70,10 +70,9 @@ object Parameter {
     apply(name, required = false, OperationParameter.In.Query, description, `type`, format)
 
   def path(name: String,
-           required: Boolean = false,
            description: Option[String] = None,
            `type`: Type = Type.String,
            format: Option[Format] = None,
            default: Option[String] = None ) =
-    apply(name, required = false, OperationParameter.In.Path, description, `type`, format)
+    apply(name, required = true, OperationParameter.In.Path, description, `type`, format)
 }

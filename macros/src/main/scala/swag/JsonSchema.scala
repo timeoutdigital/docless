@@ -1,16 +1,42 @@
 package swag
 
+import swag.JsonSchema.Definition
+
 import scala.reflect.macros.blackbox
+import scala.reflect.runtime.{universe => ru}
 import scala.language.experimental.macros
 import io.circe.Json
 
 trait JsonSchema[A] {
-  def id: Option[String] = None
+  def id: String
   def asJson: Json
+  def definition: JsonSchema.Definition =
+    Definition(id, asJson.mapObject(_.remove("id")))
 }
 
 object JsonSchema {
-  def instance[A](obj: Json): JsonSchema[A] = new JsonSchema[A] {
+  case class Definition(id: String, json: Json) {
+    def asRef: Ref = TypeRef(id)
+  }
+
+  sealed trait Ref {
+    def id: String
+  }
+
+  case class TypeRef(id: String) extends Ref
+  object TypeRef {
+    def apply(definition: Definition): TypeRef = TypeRef(definition.id)
+    def apply(schema: JsonSchema[_]): TypeRef = TypeRef(schema.id)
+  }
+
+  case class ArrayRef(id: String) extends Ref
+  object ArrayRef {
+    def apply(definition: Definition): ArrayRef = ArrayRef(definition.id)
+    def apply(schema: JsonSchema[_]): ArrayRef = ArrayRef(schema.id)
+  }
+
+  def instance[A](obj: Json)(implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] = new JsonSchema[A] {
+    override def id = tag.tpe.typeSymbol.fullName
     override def asJson = obj
   }
 
@@ -40,7 +66,7 @@ object JsonSchema {
     c.Expr[JsonSchema[T]] {
       q"""
          new JsonSchema[$tpe] {
-           override def id: Option[String] = Some($id)
+           override def id: String = $id
            override def asJson: Json =
              $json.deepMerge(Json.obj("id" -> id.asJson))
          }

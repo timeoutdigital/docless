@@ -21,6 +21,7 @@ class JsonSchemaTest extends FreeSpec {
         """
           |{
           |  "id": "swag.JsonSchemaTest.Foo",
+          |  "type": "object",
           |  "required" : [
           |    "x",
           |    "y"
@@ -66,6 +67,7 @@ class JsonSchemaTest extends FreeSpec {
           """
             |{
             |  "id": "swag.JsonSchemaTest.X",
+            |  "type": "object",
             |  "required" : [
             |    "e",
             |    "f"
@@ -99,6 +101,7 @@ class JsonSchemaTest extends FreeSpec {
         |  "type" : "object",
         |  "allOf" : [
         |    {
+        |      "type": "object",
         |      "required" : [
         |        "a",
         |        "b"
@@ -118,6 +121,7 @@ class JsonSchemaTest extends FreeSpec {
         |      }
         |    },
         |    {
+        |      "type": "object",
         |      "required" : [
         |        "d",
         |        "e"

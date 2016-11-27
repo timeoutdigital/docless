@@ -43,6 +43,7 @@ class SchemaBuilder[U <: Universe](val u: U) {
 
     q"""
       Json.obj(
+        "type" -> Json.fromString("object"),
         "required" -> $required.asJson,
         "properties" -> Json.fromFields($props)
       )
