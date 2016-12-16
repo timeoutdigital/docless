@@ -42,6 +42,7 @@ class JsonSchemaTest extends FreeSpec {
           |
         """.stripMargin) should === (Right(fooSchema.asJson))
   }
+    /*
 
     "With types extending EnumEntry" - {
       sealed abstract class E extends EnumEntry
@@ -85,7 +86,6 @@ class JsonSchemaTest extends FreeSpec {
           """.stripMargin) should === (Right(schema.asJson))
       }
     }
-    /*
 
     "generates a union schema using the allOf keyword" in {
       sealed trait X
