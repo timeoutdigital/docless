@@ -1,23 +1,48 @@
 package com.timeout.docless.swagger
 
 import com.timeout.docless.JsonSchema
+import com.timeout.docless.enumeratum.Schema
 import enumeratum._
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import io.circe._
-import com.timeout.docless.encoders.Primitives._
 import io.circe.syntax._
 import io.circe.parser._
 
+object JsonSchemaTest {
+  case class Foo(x: Int, y: String, z: Option[String]) {
+    val otherVal = "not in schema"
+  }
+
+  sealed abstract class E extends EnumEntry
+
+  object E extends Enum[E] with Schema[E] {
+    case object E1 extends E
+    case object E2 extends E
+    override val values = findValues
+  }
+
+  sealed trait F extends EnumEntry
+  object F extends Enum[F] with Schema[F] {
+    case object F1 extends F
+    case object F2 extends F
+    override val values = findValues
+  }
+
+  case class X(e: E, f: F)
+
+  sealed trait ADT
+  case class Y(a: Int, b: Char, c: Option[Double]) extends ADT
+  case class Z(d: Symbol, e: Long) extends ADT
+  case class Z1(f: Symbol, g: Long) extends ADT
+}
+
 class JsonSchemaTest extends FreeSpec {
-  "the genSchema macro" - {
-    "generates schema instance " in {
+  import JsonSchemaTest._
+  "genSchema" - {
+    "derives schema instance " in {
 
-      case class Foo(x: Int, y: String, z: Option[String]) {
-        val otherVal = "not in schema"
-      }
-
-      val fooSchema = genSchema[Foo]
+      val fooSchema = JsonSchema.genSchema[Foo]
       parser.parse(
         """
           |{
@@ -42,32 +67,13 @@ class JsonSchemaTest extends FreeSpec {
           |
         """.stripMargin) should === (Right(fooSchema.asJson))
   }
-    /*
 
     "With types extending EnumEntry" - {
-      sealed abstract class E extends EnumEntry
-
-      object E extends Enum[E] {
-        case object E1 extends E
-        case object E2 extends E
-        override val values = findValues
-      }
-
-      sealed trait F extends EnumEntry
-      object F extends Enum[F] {
-        case object F1 extends F
-        case object F2 extends F
-        override val values = findValues
-      }
-
-      case class X(e: E, f: F)
-
       "generates enum properties" in {
-        val schema = genSchema[F]
+        val schema = JsonSchema.genSchema[X]
         parser.parse(
           """
             |{
-            |  "id": "com.timeout.docless.swag.JsonSchemaTest.X",
             |  "type": "object",
             |  "required" : [
             |    "e",
@@ -88,17 +94,12 @@ class JsonSchemaTest extends FreeSpec {
     }
 
     "generates a union schema using the allOf keyword" in {
-      sealed trait X
-      case class Y(a: Int, b: Char, c: Option[Double]) extends X
-      case class Z(d: Symbol, e: Long) extends X
 
-      object X {
-        val schema = genSchema[X]
-      }
+
+      val schema = JsonSchema.genSchema[ADT]
 
       parser.parse("""
         |{
-        |  "id" : "com.timeout.docless.swag.JsonSchemaTest.X",
         |  "type" : "object",
         |  "allOf" : [
         |    {
@@ -139,8 +140,7 @@ class JsonSchemaTest extends FreeSpec {
         |    }
         |  ]
         |}
-      """.stripMargin) should === (Right(X.schema.asJson))
+      """.stripMargin) should === (Right(schema.asJson))
     }
-      */
   }
 }

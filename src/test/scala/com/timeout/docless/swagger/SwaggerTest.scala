@@ -5,7 +5,6 @@ import java.io._
 import com.github.fge.jackson.JsonLoader
 import com.github.fge.jsonschema.main.JsonSchemaFactory
 import com.timeout.docless.JsonSchema.{ArrayRef, TypeRef}
-import com.timeout.docless.encoders.Primitives._
 import com.timeout.docless.encoders.Swagger._
 import com.timeout.docless.swagger.Info.License
 import com.timeout.docless.swagger.Responses.{Header, Response}
@@ -13,6 +12,7 @@ import io.circe._
 import io.circe.syntax._
 import org.scalatest.FreeSpec
 
+import com.timeout.docless.JsonSchema
 import scala.collection.JavaConverters._
 import scala.io.Source
 
@@ -22,8 +22,8 @@ class SwaggerTest extends FreeSpec {
     case class Error(code: Int, message: Option[String])
 
     object Defs {
-      val pet = genSchema[Pet]
-      val error = genSchema[Error]
+      val pet = JsonSchema.genSchema[Pet]
+      val error = JsonSchema.genSchema[Error]
       val all = List(pet, error).map(_.definition)
     }
 
