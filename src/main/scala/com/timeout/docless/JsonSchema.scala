@@ -9,16 +9,21 @@ import shapeless.labelled._
 import java.time.{LocalDate, LocalDateTime}
 
 import cats.syntax.either._
+import com.timeout.docless.swagger.Responses.Response
 import shapeless.ops.coproduct
 
 import Function.const
 import scala.util.matching.Regex
 
-trait JsonSchema[A] {
+trait JsonSchema[A] extends JsonSchema.HasRef {
   def id: String
+
   def inline: Boolean
+
   def coproductDefinitions: List[JsonSchema.Definition]
+
   def jsonObject: JsonObject
+
   def asJson: Json = jsonObject.asJson
 
   def asObjectRef: JsonObject =
@@ -29,16 +34,24 @@ trait JsonSchema[A] {
   def definition: JsonSchema.Definition =
     JsonSchema.Definition(id, asJson)
 
-  def ref: JsonSchema.Ref = definition.asRef
-
   def definitions: List[JsonSchema.Definition] =
     coproductDefinitions :+ definition
+
+  def asResponse(description: String): Response =
+    Response(description, schema = Some(asRef))
+
+  def asArrayResponse(description: String): Response =
+    Response(description, schema = Some(asArrayRef))
 }
 
 object JsonSchema {
-  case class Definition(id: String, json: Json) {
+  trait HasRef {
+    def id: String
     def asRef: Ref = TypeRef(id)
+    def asArrayRef: Ref = ArrayRef(id)
   }
+
+  case class Definition(id: String, json: Json) extends HasRef
 
   sealed trait Ref {
     def id: String
@@ -129,8 +142,8 @@ object JsonSchema {
     }
   }
 
-    implicit val boolSchema: JsonSchema[Boolean] =
-    instance[Boolean](Map("type" -> "boolean").asJsonObject)
+  implicit val boolSchema: JsonSchema[Boolean] =
+    inlineInstance[Boolean](Map("type" -> "boolean").asJsonObject)
 
   implicit val intSchema: JsonSchema[Int] = inlineInstance[Int](Map(
       "type" -> "integer",
@@ -182,7 +195,10 @@ object JsonSchema {
      "items" -> implicitly[JsonSchema[A]].asJson
    )))
 
-  implicit def mapSchema[K, V](implicit kPattern: PatternProperty[K], vSchema: JsonSchema[V]): JsonSchema[Map[K, V]] = inlineInstance {
+  implicit def mapSchema[K, V](
+    implicit
+    kPattern: PatternProperty[K],
+    vSchema: JsonSchema[V]): JsonSchema[Map[K, V]] = inlineInstance {
     JsonObject.fromMap(Map(
       "patternProperties" -> JsonObject.singleton(
         kPattern.regex.toString, vSchema.asJson
@@ -193,7 +209,7 @@ object JsonSchema {
   implicit def optSchema[A: JsonSchema]: JsonSchema[Option[A]] =
     inlineInstance[Option[A]](implicitly[JsonSchema[A]].jsonObject)
 
-  implicit val hNilSchema: JsonSchema[HNil] = instance(JsonObject.fromMap(Map.empty))
+  implicit val hNilSchema: JsonSchema[HNil] = inlineInstance(JsonObject.fromMap(Map.empty))
 
   implicit def hlistSchema[K <: Symbol, H, T <: HList](
     implicit

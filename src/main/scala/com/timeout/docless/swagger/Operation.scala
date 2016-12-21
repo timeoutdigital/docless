@@ -24,7 +24,7 @@ case class Operation(responses: Responses = Responses.default,
 
 object Operation {
   def apply(id: Symbol, _summary: String): Operation = Operation(
-    operationId = Some(id.toString()),
+    operationId = Some(id.name.toString()),
     summary = Some(_summary))
 }
 

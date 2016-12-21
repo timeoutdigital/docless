@@ -2,7 +2,7 @@ package com.timeout.docless.encoders
 
 import com.timeout.docless.swagger._
 import com.timeout.docless.JsonSchema
-import com.timeout.docless.JsonSchema.ArrayRef
+import com.timeout.docless.JsonSchema.{ArrayRef, TypeRef}
 import io.circe._
 import io.circe.syntax._
 import io.circe.generic.semiauto._
@@ -37,7 +37,7 @@ object Swagger {
     common.deepMerge(other)
   }
 
-  implicit val operationParameterEnc = Encoder.instance[OperationParameter] { p =>
+  implicit val operationParameterEnc: Encoder[OperationParameter] = Encoder.instance[OperationParameter] { p =>
     val common = Json.obj(
       "name" -> p.name.asJson,
       "required" -> p.required.asJson,
@@ -45,7 +45,7 @@ object Swagger {
     )
     val other: Json = p match {
       case BodyParameter(_, _, _, schema) =>
-        Json.obj("schema" -> schema.map(_.id).asJson)
+        Json.obj("schema" -> schema.asJson, "in" -> "body".asJson)
       case Parameter(_, _, in, _, typ, format) =>
         Json.obj(
           "in" -> in.asJson,
@@ -68,17 +68,17 @@ object Swagger {
     defs.get.map(d => d.id -> d.json).toMap.asJson
   }
 
-  implicit val schemaRefEnc = Encoder.instance[JsonSchema.Ref] { d =>
-    val common = Json.obj(
-      "$ref" -> Json.fromString(s"#/definitions/${d.id}")
-    )
-    val arrayType = d match {
-      case ArrayRef(_) => Json.obj("type" -> Json.fromString("array"))
-      case _ => Json.obj()
+  implicit val schemaRefEnc = Encoder.instance[JsonSchema.Ref] {
+      case ArrayRef(id) =>
+        Json.obj(
+          "type" -> Json.fromString("array"),
+          "items" -> Json.obj(
+            "$ref" -> Json.fromString(s"#/definitions/$id")
+          )
+        )
+      case TypeRef(id) =>
+        Json.obj("$ref" -> Json.fromString(s"#/definitions/$id"))
     }
-
-    common.deepMerge(arrayType)
-  }
 
   implicit val headerEnc = deriveEncoder[Responses.Header]
   implicit val responseEnc = deriveEncoder[Responses.Response]
