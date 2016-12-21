@@ -9,12 +9,16 @@ import io.circe._
 import scala.reflect.runtime.{universe => u}
 
 object JsonSchemaTest {
+  val ref = "$ref"
   def id[T: u.WeakTypeTag] =
-    implicitly[u.WeakTypeTag[T]].tpe.typeSymbol.fullName
+    getClass.getCanonicalName.replace('$','.') +
+      implicitly[u.WeakTypeTag[T]].tpe.typeSymbol.name
 
   case class Foo(x: Int, y: String, z: Option[String]) {
     val otherVal = "not in schema"
   }
+
+  case class Nested(name: String, foo: Foo)
 
   sealed abstract class E extends EnumEntry
 
@@ -42,10 +46,10 @@ object JsonSchemaTest {
 class JsonSchemaTest extends FreeSpec {
   import JsonSchemaTest._
 
-  "genSchema" - {
-    "derives schema instance " in {
+  val fooSchema = JsonSchema.deriveFor[Foo]
 
-      val fooSchema = JsonSchema.deriveFor[Foo]
+  "genSchema" - {
+    "handles plain case classes" in {
       parser.parse(
         """
           |{
@@ -70,7 +74,32 @@ class JsonSchemaTest extends FreeSpec {
           |
         """.stripMargin) should === (Right(fooSchema.asJson))
       fooSchema.id should === (id[Foo])
-  }
+    }
+
+    "handles nested case classes" in {
+      implicit val fs: JsonSchema[Foo] = fooSchema
+      val schema = JsonSchema.deriveFor[Nested]
+      parser.parse(
+        s"""
+          |{
+          |  "type": "object",
+          |  "required" : [
+          |    "name",
+          |    "foo"
+          |  ],
+          |  "properties" : {
+          |    "name" : {
+          |      "type" : "string"
+          |    },
+          |    "foo" : {
+          |      "$ref" : "${id[Foo]}"
+          |    }
+          |  }
+          |}
+          |
+          """.stripMargin) should === (Right(schema.asJson))
+      schema.id should ===(id[Nested])
+    }
 
     "with types extending enumeratum.EnumEntry" - {
       "encodes enums" in {
@@ -99,9 +128,8 @@ class JsonSchemaTest extends FreeSpec {
     }
 
     "with ADTs" - {
-      val ref = "$ref"
-      val schema = JsonSchema.deriveFor[ADT]
       "generates a union schema using the allOf keyword" in {
+        val schema = JsonSchema.deriveFor[ADT]
         parser.parse(
           s"""
           {
@@ -122,6 +150,7 @@ class JsonSchemaTest extends FreeSpec {
       }
 
       "provides JSON definitions of the coproduct" in {
+        val schema = JsonSchema.deriveFor[ADT]
         val ySchema = JsonSchema.deriveFor[Y]
         val zSchema = JsonSchema.deriveFor[Z]
         val z1Schema = JsonSchema.deriveFor[Z1]

@@ -7,21 +7,29 @@ import scala.reflect.runtime.{universe => ru}
 import shapeless._
 import shapeless.labelled._
 import java.time.{LocalDate, LocalDateTime}
+
 import cats.syntax.either._
 import shapeless.ops.coproduct
+
 import Function.const
+import scala.util.matching.Regex
 
 trait JsonSchema[A] {
   def id: String
+  def inline: Boolean
   def coproductDefinitions: List[JsonSchema.Definition]
   def jsonObject: JsonObject
   def asJson: Json = jsonObject.asJson
 
-  def ref: JsonObject =
+  def asObjectRef: JsonObject =
     JsonObject.singleton("$ref", Json.fromString(id))
+
+  def asJsonRef: Json = asObjectRef.asJson
 
   def definition: JsonSchema.Definition =
     JsonSchema.Definition(id, asJson)
+
+  def ref: JsonSchema.Ref = definition.asRef
 
   def definitions: List[JsonSchema.Definition] =
     coproductDefinitions :+ definition
@@ -48,12 +56,31 @@ object JsonSchema {
     def apply(schema: JsonSchema[_]): ArrayRef = ArrayRef(schema.id)
   }
 
+  trait PatternProperty[K] {
+    def regex: Regex
+  }
+
+  object PatternProperty {
+    def fromRegex[K](r: Regex): PatternProperty[K] =
+      new PatternProperty[K] { override val regex = r }
+
+    implicit def wildcard[K]: PatternProperty[K] =
+      fromRegex[K](".*".r)
+  }
+
   def instance[A](obj: => JsonObject, defs: List[Definition] = Nil)(implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] = new JsonSchema[A] {
     override def id = tag.tpe.typeSymbol.fullName
+    override def inline = false
     override def jsonObject = obj
     override def coproductDefinitions = defs
   }
 
+  def inlineInstance[A](obj: => JsonObject)(implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] = new JsonSchema[A] {
+    override def id = tag.tpe.typeSymbol.fullName
+    override def inline = true
+    override def coproductDefinitions = Nil
+    override def jsonObject = obj
+  }
 
   trait Required[A] {
     def isRequired: Boolean = true
@@ -68,7 +95,7 @@ object JsonSchema {
       override def isRequired = true
     }
 
-    def isRequired[A: Required] = implicitly[Required[A]].isRequired
+    def isRequired[A](implicit ev: Required[A]): Boolean = ev.isRequired
 
     trait Fields[A] {
       def get: List[String]
@@ -105,68 +132,78 @@ object JsonSchema {
     implicit val boolSchema: JsonSchema[Boolean] =
     instance[Boolean](Map("type" -> "boolean").asJsonObject)
 
-  implicit val intSchema: JsonSchema[Int] = instance[Int](Map(
+  implicit val intSchema: JsonSchema[Int] = inlineInstance[Int](Map(
       "type" -> "integer",
       "format" -> "int32"
    ).asJsonObject)
 
-  implicit val longSchema: JsonSchema[Long] = instance[Long](Map(
+  implicit val longSchema: JsonSchema[Long] = inlineInstance[Long](Map(
       "type" -> "integer",
       "format" -> "int64"
     ).asJsonObject)
 
-  implicit val floatSchema: JsonSchema[Float] = instance[Float](Map(
+  implicit val floatSchema: JsonSchema[Float] = inlineInstance[Float](Map(
       "type" -> "number",
       "format" -> "float"
     ).asJsonObject
   )
 
-  implicit val doubleSchema: JsonSchema[Double] = instance[Double](Map(
+  implicit val doubleSchema: JsonSchema[Double] = inlineInstance[Double](Map(
       "type" -> "number",
       "format" -> "double"
     ).asJsonObject)
 
   implicit val strSchema: JsonSchema[String] =
-    instance[String](Map("type" -> "string").asJsonObject)
+    inlineInstance[String](Map("type" -> "string").asJsonObject)
 
   implicit val charSchema: JsonSchema[Char] =
-    instance[Char](Map("type" -> "string").asJsonObject)
+    inlineInstance[Char](Map("type" -> "string").asJsonObject)
 
-  implicit val byteSchema: JsonSchema[Byte] = instance[Byte](Map(
+  implicit val byteSchema: JsonSchema[Byte] = inlineInstance[Byte](Map(
       "type" -> "string",
       "format" -> "byte"
     ).asJsonObject)
 
   implicit val symSchema: JsonSchema[Symbol] =
-    instance[Symbol](Map("type" -> "string").asJsonObject)
+    inlineInstance[Symbol](Map("type" -> "string").asJsonObject)
 
-  implicit val dateSchema: JsonSchema[LocalDate] = instance[LocalDate](Map(
+  implicit val dateSchema: JsonSchema[LocalDate] = inlineInstance[LocalDate](Map(
     "type" -> "string",
     "format" -> "date"
   ).asJsonObject)
 
-  implicit val dateTimeSchema: JsonSchema[LocalDateTime] = instance[LocalDateTime](Map(
+  implicit val dateTimeSchema: JsonSchema[LocalDateTime] = inlineInstance[LocalDateTime](Map(
     "type" -> "string",
     "format" -> "date-time"
   ).asJsonObject)
 
-  implicit def listSchema[A: JsonSchema]: JsonSchema[List[A]] = instance[List[A]](JsonObject.fromMap(Map(
+  implicit def listSchema[A: JsonSchema]: JsonSchema[List[A]] = inlineInstance[List[A]](JsonObject.fromMap(Map(
      "type" -> Json.fromString("array"),
      "items" -> implicitly[JsonSchema[A]].asJson
    )))
 
+  implicit def mapSchema[K, V](implicit kPattern: PatternProperty[K], vSchema: JsonSchema[V]): JsonSchema[Map[K, V]] = inlineInstance {
+    JsonObject.fromMap(Map(
+      "patternProperties" -> JsonObject.singleton(
+        kPattern.regex.toString, vSchema.asJson
+      ).asJson
+    ))
+  }
+
   implicit def optSchema[A: JsonSchema]: JsonSchema[Option[A]] =
-    instance[Option[A]](implicitly[JsonSchema[A]].jsonObject)
+    inlineInstance[Option[A]](implicitly[JsonSchema[A]].jsonObject)
 
   implicit val hNilSchema: JsonSchema[HNil] = instance(JsonObject.fromMap(Map.empty))
 
   implicit def hlistSchema[K <: Symbol, H, T <: HList](
     implicit
       witness: Witness.Aux[K],
-      hSchema: Lazy[JsonSchema[H]],
+      lazyHSchema: Lazy[JsonSchema[H]],
       tSchema: JsonSchema[T]
   ): JsonSchema[FieldType[K, H] :: T] = instance {
-    val hField = witness.value.name -> hSchema.value.asJson
+    val hSchema = lazyHSchema.value
+    val hValue = if (hSchema.inline) hSchema.asJson else hSchema.asJsonRef
+    val hField = witness.value.name -> hValue
     val tFields = tSchema.jsonObject.toList
     JsonObject.fromIterable(hField :: tFields)
   }
@@ -181,18 +218,20 @@ object JsonSchema {
     tLength: coproduct.Length.Aux[T, L]
   ): JsonSchema[H :+: T] = {
     val prop = "allOf"
-    val hDef = Definition(hSchema.value.id, hSchema.value.asJson)
-    val hJson = hSchema.value.ref.asJson
-
+    val hJson = hSchema.value.asJsonRef
     val (tDefs, tJson) =
          if (tLength() == Nat._0)
            Nil -> Nil
-         else
-           tSchema.coproductDefinitions -> tSchema.asJson.hcursor.get[List[Json]](prop).valueOr(const(Nil))
+         else {
+           val c = tSchema.asJson.hcursor
+           tSchema.coproductDefinitions -> c.get[List[Json]](prop)
+             .valueOr(const(Nil))
+         }
 
     instance(
-      JsonObject.singleton(prop, Json.arr(hJson :: tJson: _*))
-    , hDef :: tDefs)
+      JsonObject.singleton(prop, Json.arr(hJson :: tJson: _*)),
+      hSchema.value.definition :: tDefs
+    )
   }
 
   implicit def genericSchema[A, R <: HList](
@@ -219,5 +258,5 @@ object JsonSchema {
       rSchema.jsonObject.+:("type" -> "object".asJson),
       rSchema.coproductDefinitions)
 
-  def deriveFor[A: JsonSchema] = implicitly[JsonSchema[A]]
+  def deriveFor[A](implicit ev: JsonSchema[A]): JsonSchema[A] = ev
 }

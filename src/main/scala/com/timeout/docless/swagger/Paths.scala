@@ -1,3 +1,3 @@
 package com.timeout.docless.swagger
 
-case class Paths(get: Path*)
+case class Paths(get: Seq[Path])
