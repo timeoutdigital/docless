@@ -6,10 +6,12 @@ import enumeratum._
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
 import io.circe._
-import io.circe.syntax._
-import io.circe.parser._
+import scala.reflect.runtime.{universe => u}
 
 object JsonSchemaTest {
+  def id[T: u.WeakTypeTag] =
+    implicitly[u.WeakTypeTag[T]].tpe.typeSymbol.fullName
+
   case class Foo(x: Int, y: String, z: Option[String]) {
     val otherVal = "not in schema"
   }
@@ -39,10 +41,11 @@ object JsonSchemaTest {
 
 class JsonSchemaTest extends FreeSpec {
   import JsonSchemaTest._
+
   "genSchema" - {
     "derives schema instance " in {
 
-      val fooSchema = JsonSchema.genSchema[Foo]
+      val fooSchema = JsonSchema.deriveFor[Foo]
       parser.parse(
         """
           |{
@@ -66,11 +69,13 @@ class JsonSchemaTest extends FreeSpec {
           |}
           |
         """.stripMargin) should === (Right(fooSchema.asJson))
+      fooSchema.id should === (id[Foo])
   }
 
-    "With types extending EnumEntry" - {
-      "generates enum properties" in {
-        val schema = JsonSchema.genSchema[X]
+    "with types extending enumeratum.EnumEntry" - {
+      "encodes enums" in {
+        val schema = JsonSchema.deriveFor[X]
+
         parser.parse(
           """
             |{
@@ -93,54 +98,38 @@ class JsonSchemaTest extends FreeSpec {
       }
     }
 
-    "generates a union schema using the allOf keyword" in {
+    "with ADTs" - {
+      val ref = "$ref"
+      val schema = JsonSchema.deriveFor[ADT]
+      "generates a union schema using the allOf keyword" in {
+        parser.parse(
+          s"""
+          {
+            "type" : "object",
+            "allOf" : [
+              {
+                "$ref": "${id[Y]}"
+              },
+              {
+                "$ref": "${id[Z]}"
+              },
+              {
+                "$ref": "${id[Z1]}"
+              }
+            ]
+          }
+        """.stripMargin) should === (Right(schema.asJson))
+      }
 
+      "provides JSON definitions of the coproduct" in {
+        val ySchema = JsonSchema.deriveFor[Y]
+        val zSchema = JsonSchema.deriveFor[Z]
+        val z1Schema = JsonSchema.deriveFor[Z1]
 
-      val schema = JsonSchema.genSchema[ADT]
-
-      parser.parse("""
-        |{
-        |  "type" : "object",
-        |  "allOf" : [
-        |    {
-        |      "type": "object",
-        |      "required" : [
-        |        "a",
-        |        "b"
-        |      ],
-        |      "properties" : {
-        |        "a" : {
-        |          "type" : "integer",
-        |          "format": "int32"
-        |        },
-        |        "b" : {
-        |          "type" : "string"
-        |        },
-        |        "c" : {
-        |          "type" : "number",
-        |          "format": "double"
-        |        }
-        |      }
-        |    },
-        |    {
-        |      "type": "object",
-        |      "required" : [
-        |        "d",
-        |        "e"
-        |      ],
-        |      "properties" : {
-        |        "d" : {
-        |          "type" : "string"
-        |        },
-        |        "e" : {
-        |          "type" : "integer",
-        |          "format": "int64"
-        |        }
-        |      }
-        |    }
-        |  ]
-        |}
-      """.stripMargin) should === (Right(schema.asJson))
+        schema.definitions(0) should === (ySchema.definition)
+        schema.definitions(1) should === (zSchema.definition)
+        schema.definitions(2) should === (z1Schema.definition)
+      }
     }
   }
 }

@@ -22,8 +22,8 @@ class SwaggerTest extends FreeSpec {
     case class Error(code: Int, message: Option[String])
 
     object Defs {
-      val pet = JsonSchema.genSchema[Pet]
-      val error = JsonSchema.genSchema[Error]
+      val pet = JsonSchema.deriveFor[Pet]
+      val error = JsonSchema.deriveFor[Error]
       val all = List(pet, error).map(_.definition)
     }
 
@@ -38,6 +38,17 @@ class SwaggerTest extends FreeSpec {
       format = Some(Format.Int32)
     ).asInteger
 
+    val limitParam = Parameter.query(
+      name = "limit",
+      description = Some("How many items to return at one time (max 100)"),
+      format = Some(Format.Int32)
+    ).asInteger
+
+    val petResp = Response(
+      description = "pet response",
+      schema = Some(ArrayRef(Defs.pet))
+    )
+
     val petstoreSchema = APISchema(
       info = Info(title = "Swagger petstore", license = Some(License(name = "MIT"))),
       host = "petstore.swagger.io",
@@ -45,84 +56,47 @@ class SwaggerTest extends FreeSpec {
       schemes = Set(Scheme.Http),
       consumes = Set("application/json"),
       produces = Set("application/json")
-
     ).defining(Defs.all: _*)
-      .withPaths (
-        Path("/pets")
-          .Get(Operation(
-            operationId = Some("listPets"),
+     .withPaths(
+       "/pets"
+         .Get(Operation(
+           operationId = Some("listPets"),
+           tags = List("pets"),
+           summary = Some("List all pets"))
+           .withParams(limitParam)
+           .responding(errorResponse)(
+             200 -> Response(
+               schema = Some(ArrayRef(Defs.pet)),
+               description = "A paged array of pets"
+             ).withHeaders(
+               "x-next" -> Header(
+                 `type` = Type.String,
+                 description = Some("A link to the next page of responses")
+               )
+             )
+           ))
+         .Post(Operation(
+           operationId = Some("createPets"),
+           tags = List("pets"),
+           summary = Some("Create a pet"))
+           .responding(errorResponse)(201 -> petResp))
+       ,
+       "/pets/{id}"
+         .Get(Operation(
+           parameters = List(petIdParam),
+           operationId = Some("showPetById"),
+           tags = List("pets"),
+           summary = Some("info for a specific pet"))
+           .responding(errorResponse)(200 -> petResp))
+         .Delete(Operation(
+            operationId = Some("deletePetById"),
             tags = List("pets"),
-            summary = Some("List all pets"),
-            responses = Responses(
-              default = errorResponse,
-              byStatusCode = Map(
-                200 -> Response(
-                  schema = Some(ArrayRef(Defs.pet)),
-                  description = "A paged array of pets",
-                  headers = Map(
-                    "x-next" -> Header(
-                      `type` = Type.String,
-                      description = Some("A link to the next page of responses")
-                    )
-                  )
-                )
-              )
-            )).withParams(Parameter.query(
-            name = "limit",
-            description = Some("How many items to return at one time (max 100)"),
-            format = Some(Format.Int32)
-          ).as(Type.Integer))
-
-          ).Post(Operation(
-          operationId = Some("createPets"),
-          tags = List("pets"),
-          summary = Some("Create a pet"),
-
-          responses = Responses(
-            default = errorResponse,
-            byStatusCode = Map(
-              201 -> Response(
-                description = "pet response",
-                schema = Some(ArrayRef(Defs.pet))
-              )
-            )
-          )
-        )),
-
-        Path(id="/pets/{id}")
-          .Get(Operation(
-            parameters = List(petIdParam),
-            operationId = Some("showPetById"),
-            tags = List("pets"),
-            summary = Some("info for a specific pet"),
-            responses = Responses(
-              default = errorResponse,
-              byStatusCode = Map(
-                200 -> Response(
-                  description = "pet response",
-                  schema = Some(ArrayRef(Defs.pet))
-                )
-              )
-            ))
-          ).Delete(Operation(
-          operationId = Some("deletePetById"),
-          tags = List("pets"),
-          summary = Some("deletes a single pet"),
-          responses = Responses(
-            default = errorResponse,
-            byStatusCode = Map(
-              204 -> Response(
-                description = "pet response",
-                schema = Some(ArrayRef(Defs.pet))
-              )
-            )
-          )
-        ))
-      )
+            summary = Some("deletes a single pet"))
+            .responding(errorResponse)(204 -> petResp))
+     )
 
     val json = JsonLoader.fromResource("/swagger-schema.json")
     val schema = JsonSchemaFactory.byDefault().getJsonSchema(json)
-    val example = Source.fromFile("petstore-simple.json").mkString
     val printer = Printer.spaces2.copy(dropNullKeys = true)
     val jsonS = printer.pretty(petstoreSchema.asJson)
     val report = schema.validate(JsonLoader.fromString(jsonS))

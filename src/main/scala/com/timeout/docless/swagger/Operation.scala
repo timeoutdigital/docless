@@ -1,6 +1,6 @@
 package com.timeout.docless.swagger
 
-case class Operation(responses: Responses,
+case class Operation(responses: Responses = Responses.default,
                      parameters: List[OperationParameter] = Nil,
                      consumes: Set[String] = Set.empty,
                      produces: Set[String] = Set.empty,
@@ -16,8 +16,7 @@ case class Operation(responses: Responses,
   def withParams(ps: OperationParameter*): Operation =
     copy(parameters = ps.toList)
 
-  def responding(default: Responses.Response,
-                 byStatus: Map[Int, Responses.Response] = Map.empty): Operation =
-    copy(responses = Responses(default, byStatus))
+  def responding(default: Responses.Response)(rs: (Int, Responses.Response)*): Operation =
+    copy(responses = Responses(default, rs.toMap))
 }
 

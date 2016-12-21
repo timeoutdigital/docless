@@ -13,20 +13,18 @@ import Function.const
 
 trait JsonSchema[A] {
   def id: String
-  def asJson: Json = jsonObject.asJson
-
+  def coproductDefinitions: List[JsonSchema.Definition]
   def jsonObject: JsonObject
-
-  def map[B](f: JsonObject => JsonObject): JsonSchema[B] = {
-    val self = this
-    JsonSchema.instance[B](f(self.jsonObject))
-  }
+  def asJson: Json = jsonObject.asJson
 
   def ref: JsonObject =
     JsonObject.singleton("$ref", Json.fromString(id))
 
   def definition: JsonSchema.Definition =
     JsonSchema.Definition(id, asJson)
+
+  def definitions: List[JsonSchema.Definition] =
+    coproductDefinitions :+ definition
 }
 
 object JsonSchema {
@@ -50,9 +48,10 @@ object JsonSchema {
     def apply(schema: JsonSchema[_]): ArrayRef = ArrayRef(schema.id)
   }
 
-  def instance[A](obj: => JsonObject, idS: Option[String] = None)(implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] = new JsonSchema[A] {
-    override def id = idS.getOrElse(tag.tpe.typeSymbol.fullName)
+  def instance[A](obj: => JsonObject, defs: List[Definition] = Nil)(implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] = new JsonSchema[A] {
+    override def id = tag.tpe.typeSymbol.fullName
     override def jsonObject = obj
+    override def coproductDefinitions = defs
   }
 
 
@@ -181,24 +180,26 @@ object JsonSchema {
     tSchema: JsonSchema[T],
     tLength: coproduct.Length.Aux[T, L]
   ): JsonSchema[H :+: T] = {
-    instance {
-      val prop = "allOf"
-      val hJson = hSchema.value.ref.asJson
-      val tJson =
-        if (tLength() == Nat._0)
-          Nil
-        else
-          tSchema.asJson.hcursor.get[List[Json]](prop).valueOr(const(Nil))
+    val prop = "allOf"
+    val hDef = Definition(hSchema.value.id, hSchema.value.asJson)
+    val hJson = hSchema.value.ref.asJson
 
+    val (tDefs, tJson) =
+         if (tLength() == Nat._0)
+           Nil -> Nil
+         else
+           tSchema.coproductDefinitions -> tSchema.asJson.hcursor.get[List[Json]](prop).valueOr(const(Nil))
+
+    instance(
       JsonObject.singleton(prop, Json.arr(hJson :: tJson: _*))
-    }
+    , hDef :: tDefs)
   }
 
   implicit def genericSchema[A, R <: HList](
     implicit
     gen: LabelledGeneric.Aux[A, R],
     rSchema: JsonSchema[R],
-    fields: JsonSchema.Required.Fields[R],
+    fields: Required.Fields[R],
     tag: ru.WeakTypeTag[A]
   ): JsonSchema[A] = {
     instance[A](JsonObject.fromMap(Map(
@@ -211,8 +212,12 @@ object JsonSchema {
   implicit def genericCoprodSchema[A, R <: Coproduct](
     implicit
     gen: Generic.Aux[A, R],
-    rSchema: JsonSchema[R]
-  ): JsonSchema[A] = rSchema.map(j => j.+:("type" -> "object".asJson))
+    rSchema: JsonSchema[R],
+    tag: ru.WeakTypeTag[A]
+  ): JsonSchema[A] =
+    instance[A](
+      rSchema.jsonObject.+:("type" -> "object".asJson),
+      rSchema.coproductDefinitions)
 
-  def genSchema[A: JsonSchema] = implicitly[JsonSchema[A]]
+  def deriveFor[A: JsonSchema] = implicitly[JsonSchema[A]]
 }
