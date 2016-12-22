@@ -1,8 +1,9 @@
 package com.timeout.docless.encoders
 
 import com.timeout.docless.swagger._
-import com.timeout.docless.JsonSchema
-import com.timeout.docless.JsonSchema.{ArrayRef, TypeRef}
+import com.timeout.docless.schema.JsonSchema
+import com.timeout.docless.schema.JsonSchema.{ArrayRef, TypeRef}
+
 import io.circe._
 import io.circe.syntax._
 import io.circe.generic.semiauto._
@@ -16,17 +17,18 @@ object Swagger {
   implicit val externalDocEnc = deriveEncoder[ExternalDocs]
 
   implicit val securitySchemeEncoder = Encoder.instance[SecurityScheme]{ s =>
-    val common = Json.obj(
+    val common = Map(
       "name" -> s.name.asJson,
       "description" -> s.description.asJson
     )
+
     val other = s match {
       case Basic(_, _) =>
-        Json.obj("type" -> "basic".asJson)
+        Map("type" -> "basic".asJson)
       case ApiKey(_, in, _) =>
-        Json.obj("type" -> "api_key".asJson, "in" -> in.asJson)
+        Map("type" -> "api_key".asJson, "in" -> in.asJson)
       case OAuth2(_, flow, authUrl, tokenUrl, scopes, _) =>
-        Json.obj(
+        Map(
           "type" -> "oauth2".asJson,
           "flow" -> flow.asJson,
           "authorizationUrl" -> authUrl.asJson,
@@ -34,26 +36,26 @@ object Swagger {
           "scopes" -> scopes.asJson
         )
     }
-    common.deepMerge(other)
+    Json.fromFields(common ++ other)
   }
 
   implicit val operationParameterEnc: Encoder[OperationParameter] = Encoder.instance[OperationParameter] { p =>
-    val common = Json.obj(
+    val common = Map(
       "name" -> p.name.asJson,
       "required" -> p.required.asJson,
       "description" -> p.description.asJson
     )
-    val other: Json = p match {
+    val other = p match {
       case BodyParameter(_, _, _, schema) =>
-        Json.obj("schema" -> schema.asJson, "in" -> "body".asJson)
+        Map("schema" -> schema.asJson, "in" -> "body".asJson)
       case Parameter(_, _, in, _, typ, format) =>
-        Json.obj(
+        Map(
           "in" -> in.asJson,
           "type" -> typ.asJson,
           "format" -> format.asJson
         )
       case ArrayParameter(_, _, in, _, itemType, cFormat, minMax, format) =>
-        Json.obj(
+        Map(
           "in" -> in.asJson,
           "type" -> "array".asJson,
           "items" -> Json.obj("type" -> itemType.asJson),
@@ -61,7 +63,7 @@ object Swagger {
           "format" -> format.asJson
         )
     }
-    common.deepMerge(other)
+    Json.fromFields(common ++ other)
   }
 
   implicit val definitionsEnc = Encoder.instance[Definitions] { defs =>

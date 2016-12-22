@@ -1,11 +1,11 @@
-package com.timeout.docless.swagger
+package com.timeout.docless.schema
 
-import com.timeout.docless.JsonSchema
-import com.timeout.docless.enumeratum.Schema
+import Auto.EnumSchema
 import enumeratum._
+import io.circe._
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
-import io.circe._
+
 import scala.reflect.runtime.{universe => u}
 
 object JsonSchemaTest {
@@ -22,14 +22,14 @@ object JsonSchemaTest {
 
   sealed abstract class E extends EnumEntry
 
-  object E extends Enum[E] with Schema[E] {
+  object E extends Enum[E] with EnumSchema[E] {
     case object E1 extends E
     case object E2 extends E
     override val values = findValues
   }
 
   sealed trait F extends EnumEntry
-  object F extends Enum[F] with Schema[F] {
+  object F extends Enum[F] with EnumSchema[F] {
     case object F1 extends F
     case object F2 extends F
     override val values = findValues
@@ -48,7 +48,7 @@ class JsonSchemaTest extends FreeSpec {
 
   val fooSchema = JsonSchema.deriveFor[Foo]
 
-  "genSchema" - {
+  "automatic derivation" - {
     "handles plain case classes" in {
       parser.parse(
         """
@@ -102,7 +102,20 @@ class JsonSchemaTest extends FreeSpec {
     }
 
     "with types extending enumeratum.EnumEntry" - {
-      "encodes enums" in {
+      "does not derive automatically" in {
+        """
+          sealed trait WontCompile extends EnumEntry
+          object WontCompile extends Enum[WontCompile] {
+            object A extends WontCompile
+            object B extends WontCompile
+            override def values = findValues
+
+            val schema = JsonSchema.deriveFor[WontCompile]
+          }
+
+        """.stripMargin shouldNot typeCheck
+      }
+      "encodes enums when the EnumSchema[T] trait is extended" in {
         val schema = JsonSchema.deriveFor[X]
 
         parser.parse(

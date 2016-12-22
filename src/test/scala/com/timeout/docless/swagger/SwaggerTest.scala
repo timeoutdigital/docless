@@ -4,7 +4,8 @@ import java.io._
 
 import com.github.fge.jackson.JsonLoader
 import com.github.fge.jsonschema.main.JsonSchemaFactory
-import com.timeout.docless.JsonSchema.{ArrayRef, TypeRef}
+import com.timeout.docless.schema.JsonSchema.{ArrayRef, TypeRef}
+import com.timeout.docless.schema.JsonSchema
 import com.timeout.docless.encoders.Swagger._
 import com.timeout.docless.swagger.Info.License
 import com.timeout.docless.swagger.Responses.{Header, Response}
@@ -12,7 +13,6 @@ import io.circe._
 import io.circe.syntax._
 import org.scalatest.FreeSpec
 
-import com.timeout.docless.JsonSchema
 import scala.collection.JavaConverters._
 import scala.io.Source
 

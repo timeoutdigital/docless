@@ -1,6 +1,6 @@
 package com.timeout.docless.swagger
 
-import com.timeout.docless.JsonSchema
+import com.timeout.docless.schema.JsonSchema
 
 object Responses {
   type HeaderName = String
