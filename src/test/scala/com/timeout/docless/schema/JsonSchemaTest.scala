@@ -10,6 +10,7 @@ import scala.reflect.runtime.{universe => u}
 
 object JsonSchemaTest {
   val ref = "$ref"
+
   def id[T: u.WeakTypeTag] =
     getClass.getCanonicalName.replace('$','.') +
       implicitly[u.WeakTypeTag[T]].tpe.typeSymbol.name

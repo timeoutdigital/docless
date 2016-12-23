@@ -21,8 +21,9 @@ trait JsonSchema[A] extends JsonSchema.HasRef {
 
   def asJson: Json = jsonObject.asJson
 
-  def asObjectRef: JsonObject =
-    JsonObject.singleton("$ref", Json.fromString(id))
+  def asObjectRef: JsonObject = JsonObject.singleton(
+    "$ref", s"#/definitions/$id".asJson
+  )
 
   def asJsonRef: Json = asObjectRef.asJson
 
