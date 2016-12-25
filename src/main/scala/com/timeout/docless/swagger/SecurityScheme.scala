@@ -7,19 +7,21 @@ sealed trait SecurityScheme {
   def name: String
 }
 
-case class Basic(name: String,
-                 description: Option[String] = None) extends SecurityScheme
+case class Basic(name: String, description: Option[String] = None)
+    extends SecurityScheme
 
 case class ApiKey(name: String,
                   in: SecurityScheme.ApiKey.In,
-                  description: Option[String] = None) extends SecurityScheme
+                  description: Option[String] = None)
+    extends SecurityScheme
 
 case class OAuth2(name: String,
                   flow: SecurityScheme.OAuth2.Flow,
                   autorizationUrl: Option[String] = None,
                   tokenUrl: Option[String] = None,
                   scopes: Map[String, String] = Map.empty,
-                  description: Option[String] = None) extends SecurityScheme
+                  description: Option[String] = None)
+    extends SecurityScheme
 
 object SecurityScheme {
 

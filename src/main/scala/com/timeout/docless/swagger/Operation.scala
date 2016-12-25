@@ -11,20 +11,20 @@ case class Operation(responses: Responses = Responses.default,
                      summary: Option[String] = None,
                      description: Option[String] = None,
                      externalDoc: Option[ExternalDocs] = None,
-                     tags: List[String] = Nil) extends ParamSetters[Operation] {
+                     tags: List[String] = Nil)
+    extends ParamSetters[Operation] {
 
   override def withParams(ps: OperationParameter*): Operation =
     copy(parameters = ps.toList)
 
   def withDescription(desc: String) = copy(description = Some(desc))
 
-  def responding(default: Responses.Response)(rs: (Int, Responses.Response)*): Operation =
+  def responding(default: Responses.Response)(
+      rs: (Int, Responses.Response)*): Operation =
     copy(responses = Responses(default, rs.toMap))
 }
 
 object Operation {
-  def apply(id: Symbol, _summary: String): Operation = Operation(
-    operationId = Some(id.name.toString()),
-    summary = Some(_summary))
+  def apply(id: Symbol, _summary: String): Operation =
+    Operation(operationId = Some(id.name.toString()), summary = Some(_summary))
 }
-

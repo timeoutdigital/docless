@@ -12,14 +12,17 @@ object Path {
     def ref: Ref
   }
 
-  case class ParamRef(ref: Ref, path: String, param: String) extends RefWithContext
+  case class ParamRef(ref: Ref, path: String, param: String)
+      extends RefWithContext
 
-  case class ResponseRef(ref: Ref, path: String, method: Method) extends RefWithContext
+  case class ResponseRef(ref: Ref, path: String, method: Method)
+      extends RefWithContext
 }
 
 case class Path(id: String,
                 parameters: List[OperationParameter] = Nil,
-                operations: Map[Method, Operation] = Map.empty) extends ParamSetters[Path] {
+                operations: Map[Method, Operation] = Map.empty)
+    extends ParamSetters[Path] {
 
   private def paramRef(p: OperationParameter): Option[ParamRef] =
     p.schema.map(ParamRef(_, id, p.name))
@@ -29,9 +32,10 @@ case class Path(id: String,
       operations.foldMap(_.parameters.flatMap(paramRef))
 
   def responseRefs: Set[RefWithContext] =
-    operations.flatMap { case (m, op) =>
-      val resps = op.responses.default :: op.responses.byStatusCode.values.toList
-      resps.flatMap(_.schema.map(ResponseRef(_, id, m)))
+    operations.flatMap {
+      case (m, op) =>
+        val resps = op.responses.default :: op.responses.byStatusCode.values.toList
+        resps.flatMap(_.schema.map(ResponseRef(_, id, m)))
     }.toSet
 
   def refs: Set[RefWithContext] = responseRefs ++ paramRefs

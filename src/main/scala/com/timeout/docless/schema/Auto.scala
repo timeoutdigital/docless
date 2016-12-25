@@ -14,11 +14,11 @@ import scala.annotation.implicitNotFound
 import enumeratum.Enum
 
 trait Auto {
-  implicit val hNilSchema: JsonSchema[HNil] = inlineInstance(JsonObject.fromMap(Map.empty))
+  implicit val hNilSchema: JsonSchema[HNil] = inlineInstance(
+    JsonObject.fromMap(Map.empty))
 
   implicit def hlistSchema[K <: Symbol, H, T <: HList](
-    implicit
-      witness: Witness.Aux[K],
+      implicit witness: Witness.Aux[K],
       lazyHSchema: Lazy[JsonSchema[H]],
       tSchema: JsonSchema[T]
   ): JsonSchema[FieldType[K, H] :: T] = instanceAndRelated {
@@ -39,11 +39,10 @@ trait Auto {
     instance { sys.error("Unreachable code JsonSchema[CNil]") }
 
   implicit def coproductSchema[H, T <: Coproduct, L <: Nat](
-    implicit
-    lazyHSchema: Lazy[JsonSchema[H]],
-    tSchema: JsonSchema[T],
-    tLength: coproduct.Length.Aux[T, L],
-    ev: H <:!< EnumEntry
+      implicit lazyHSchema: Lazy[JsonSchema[H]],
+      tSchema: JsonSchema[T],
+      tLength: coproduct.Length.Aux[T, L],
+      ev: H <:!< EnumEntry
   ): JsonSchema[H :+: T] = {
     val prop = "allOf"
     val hSchema = lazyHSchema.value
@@ -61,26 +60,25 @@ trait Auto {
   }
 
   implicit def genericSchema[A, R <: HList](
-    implicit
-    gen: LabelledGeneric.Aux[A, R],
-    rSchema: JsonSchema[R],
-    fields: Required.Fields[R],
-    tag: ru.WeakTypeTag[A]
+      implicit gen: LabelledGeneric.Aux[A, R],
+      rSchema: JsonSchema[R],
+      fields: Required.Fields[R],
+      tag: ru.WeakTypeTag[A]
   ): JsonSchema[A] =
     instanceAndRelated[A] {
-      JsonObject.fromMap(Map(
-        "type" -> Json.fromString("object"),
-        "required" -> fields.asJson,
-        "properties" -> rSchema.jsonObject.asJson
-      )) -> rSchema.relatedDefinitions
+      JsonObject.fromMap(
+        Map(
+          "type" -> Json.fromString("object"),
+          "required" -> fields.asJson,
+          "properties" -> rSchema.jsonObject.asJson
+        )) -> rSchema.relatedDefinitions
     }
 
   @implicitNotFound(msg = "cannot derive coproduct")
   implicit def genericCoprodSchema[A, R <: Coproduct](
-    implicit
-    gen: Generic.Aux[A, R],
-    rSchema: JsonSchema[R],
-    tag: ru.WeakTypeTag[A]
+      implicit gen: Generic.Aux[A, R],
+      rSchema: JsonSchema[R],
+      tag: ru.WeakTypeTag[A]
   ): JsonSchema[A] =
     instanceAndRelated[A] {
       rSchema.jsonObject.+:(

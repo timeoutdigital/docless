@@ -9,7 +9,9 @@ import scala.reflect.runtime.{universe => ru}
 import scala.util.matching.Regex
 import enumeratum.{Enum, EnumEntry}
 
-@implicitNotFound(msg = "Cannot derive a JsonSchema for ${A}. Please verify that instances can be derived for all its fields")
+@implicitNotFound(
+  msg =
+    "Cannot derive a JsonSchema for ${A}. Please verify that instances can be derived for all its fields")
 trait JsonSchema[A] extends JsonSchema.HasRef {
   def id: String
 
@@ -22,7 +24,8 @@ trait JsonSchema[A] extends JsonSchema.HasRef {
   def asJson: Json = jsonObject.asJson
 
   def asObjectRef: JsonObject = JsonObject.singleton(
-    "$ref", s"#/definitions/$id".asJson
+    "$ref",
+    s"#/definitions/$id".asJson
   )
 
   def asJsonRef: Json = asObjectRef.asJson
@@ -77,22 +80,24 @@ object JsonSchema extends Primitives with Auto {
       fromRegex[K](".*".r)
   }
 
-  def instance[A](obj: => JsonObject)(implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] = new JsonSchema[A] {
+  def instance[A](obj: => JsonObject)(
+      implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] = new JsonSchema[A] {
     override def id = tag.tpe.typeSymbol.fullName
     override def inline = false
     override def jsonObject = obj
     override def relatedDefinitions = Set.empty
   }
 
-  def instanceAndRelated[A](pair: => (JsonObject, Set[Definition]))(implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] = new JsonSchema[A] {
+  def instanceAndRelated[A](pair: => (JsonObject, Set[Definition]))(
+      implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] = new JsonSchema[A] {
     override def id = tag.tpe.typeSymbol.fullName
     override def inline = false
     override def jsonObject = pair._1
     override def relatedDefinitions = pair._2
   }
 
-
-  def inlineInstance[A](obj: => JsonObject)(implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] = new JsonSchema[A] {
+  def inlineInstance[A](obj: => JsonObject)(
+      implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] = new JsonSchema[A] {
     override def id = tag.tpe.typeSymbol.fullName
     override def inline = true
     override def relatedDefinitions = Set.empty

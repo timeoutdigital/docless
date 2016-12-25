@@ -20,14 +20,19 @@ trait PathGroup {
 object PathGroup {
   val Empty = PathGroup(Nil, Nil, Nil)
 
-  def aggregate(info: Info, groups: List[PathGroup]): ValidatedNel[SchemaError, APISchema] = {
+  def aggregate(
+      info: Info,
+      groups: List[PathGroup]): ValidatedNel[SchemaError, APISchema] = {
     val g = groups.combineAll
 
     def isDefined(ctx: RefWithContext): Boolean =
       g.definitions.exists(_.id === ctx.ref.id)
 
     val errors =
-      g.paths.foldMap(_.refs.filterNot(isDefined)).map(SchemaError.missingDefinition).toList
+      g.paths
+        .foldMap(_.refs.filterNot(isDefined))
+        .map(SchemaError.missingDefinition)
+        .toList
 
     if (errors.nonEmpty)
       Validated.invalid[NonEmptyList[SchemaError], APISchema](
@@ -62,11 +67,9 @@ object PathGroup {
     override def empty: PathGroup = Empty
 
     override def combine(x: PathGroup, y: PathGroup): PathGroup =
-      PathGroup(
-        x.paths |+| y.paths,
-        x.definitions |+| y.definitions,
-        x.params |+| y.params)
+      PathGroup(x.paths |+| y.paths,
+                x.definitions |+| y.definitions,
+                x.params |+| y.params)
   }
-
 
 }

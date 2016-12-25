@@ -9,9 +9,10 @@ trait Required[A] {
 }
 
 object Required {
-  implicit def optIsRequired[A]: Required[Option[A]] = new Required[Option[A]] {
-    override def isRequired = false
-  }
+  implicit def optIsRequired[A]: Required[Option[A]] =
+    new Required[Option[A]] {
+      override def isRequired = false
+    }
 
   implicit def otherRequired[A]: Required[A] = new Required[A] {
     override def isRequired = true
@@ -31,21 +32,19 @@ object Required {
 
     implicit val hnilFields: Fields[HNil] = instance(Nil)
 
-    implicit def hlistFields[K <: Symbol, H, T <: HList](implicit
-      witness: Witness.Aux[K],
-      req: Lazy[Required[H]],
-      tFields: Fields[T])
-    : Fields[FieldType[K, H] :: T] = instance {
+    implicit def hlistFields[K <: Symbol, H, T <: HList](
+        implicit witness: Witness.Aux[K],
+        req: Lazy[Required[H]],
+        tFields: Fields[T]): Fields[FieldType[K, H] :: T] = instance {
       if (req.value.isRequired)
         witness.value.name :: tFields.get
       else
         tFields.get
     }
 
-    implicit def genericFields[A, R](implicit
-      gen: LabelledGeneric.Aux[A, R],
-      rfs: Fields[R])
-    : Fields[A] = instance(rfs.get)
+    implicit def genericFields[A, R](implicit gen: LabelledGeneric.Aux[A, R],
+                                     rfs: Fields[R]): Fields[A] =
+      instance(rfs.get)
 
     def apply[L](implicit ev: Fields[L]): List[String] = ev.get
   }

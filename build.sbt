@@ -26,4 +26,3 @@ libraryDependencies ++= Seq(
 licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
 
 //val paradise = "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full
-

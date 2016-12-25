@@ -5,10 +5,8 @@ object Info {
                      url: Option[String] = None,
                      email: Option[String] = None)
 
-  case class License(name: String,
-                     url: Option[String] = None)
+  case class License(name: String, url: Option[String] = None)
 }
-
 
 case class Info(title: String,
                 version: String = "1.0",

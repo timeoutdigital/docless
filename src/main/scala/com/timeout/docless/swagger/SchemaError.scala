@@ -7,7 +7,8 @@ sealed trait SchemaError
 
 object SchemaError {
   case class MissingDefinition(context: RefWithContext) extends SchemaError
-  def missingDefinition(ctx: RefWithContext): SchemaError = MissingDefinition(ctx)
+  def missingDefinition(ctx: RefWithContext): SchemaError =
+    MissingDefinition(ctx)
 
   implicit val mdShow: Show[SchemaError] = Show.show {
     case MissingDefinition(ParamRef(r, path, param)) =>

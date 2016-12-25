@@ -33,7 +33,8 @@ trait OperationParameter extends HasSchema {
 case class BodyParameter(description: Option[String] = None,
                          required: Boolean = false,
                          name: String = "body",
-                         override val schema: Option[JsonSchema.Ref] = None) extends OperationParameter {
+                         override val schema: Option[JsonSchema.Ref] = None)
+    extends OperationParameter {
   override def mandatory = copy(required = true)
   override def as[T <: Type](t: T) = this
 }
@@ -45,7 +46,8 @@ case class ArrayParameter(name: String,
                           itemType: Type = Type.String,
                           collectionFormat: Option[CollectionFormat] = None,
                           minMax: Option[Range] = None,
-                          format: Option[Format] = None) extends OperationParameter {
+                          format: Option[Format] = None)
+    extends OperationParameter {
 
   def as[T <: Type](t: T) = copy(`itemType` = t)
 
@@ -57,7 +59,8 @@ case class Parameter(name: String,
                      in: OperationParameter.In,
                      description: Option[String] = None,
                      `type`: Type = Type.String,
-                     format: Option[Format] = None) extends OperationParameter {
+                     format: Option[Format] = None)
+    extends OperationParameter {
 
   def as[T <: Type](t: T) = copy(`type` = t)
   override def mandatory = copy(required = true)
@@ -69,12 +72,22 @@ object Parameter {
             description: Option[String] = None,
             `type`: Type = Type.String,
             format: Option[Format] = None) =
-    apply(name, required = false, OperationParameter.In.Query, description, `type`, format)
+    apply(name,
+          required = false,
+          OperationParameter.In.Query,
+          description,
+          `type`,
+          format)
 
   def path(name: String,
            description: Option[String] = None,
            `type`: Type = Type.String,
            format: Option[Format] = None,
-           default: Option[String] = None ) =
-    apply(name, required = true, OperationParameter.In.Path, description, `type`, format)
+           default: Option[String] = None) =
+    apply(name,
+          required = true,
+          OperationParameter.In.Path,
+          description,
+          `type`,
+          format)
 }
