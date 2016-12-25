@@ -95,7 +95,12 @@ object Swagger {
   }
   implicit val operationEnc = deriveEncoder[Operation].mapJsonObject(_.remove("id"))
 
-  implicit val pathEnc = deriveEncoder[Path].mapJsonObject(_.remove("id"))
+  implicit val pathEnc = Encoder.instance[Path] { p =>
+    val obj = JsonObject.singleton("parameters", p.parameters.asJson)
+    p.operations.foldLeft(obj) { case (acc, (method, op)) =>
+      acc.+:(method.entryName -> op.asJson)
+    }.asJson
+  }
 
   implicit val pathsEnc = Encoder.instance[Paths] { paths =>
     paths.get.map(d => d.id -> d.asJson).toMap.asJson

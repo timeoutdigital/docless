@@ -1,6 +1,6 @@
 package com.timeout.docless.schema
 
-import Auto.EnumSchema
+import com.timeout.docless.schema.Auto.EnumSchema
 import enumeratum._
 import io.circe._
 import org.scalatest.FreeSpec
@@ -12,8 +12,14 @@ object JsonSchemaTest {
   val ref = "$ref"
 
   def id[T: u.WeakTypeTag] =
-    getClass.getCanonicalName.replace('$','.') +
+    getClass.getCanonicalName.replace('$', '.') +
       implicitly[u.WeakTypeTag[T]].tpe.typeSymbol.name
+
+  sealed trait F extends EnumEntry
+
+  sealed trait ADT
+
+  sealed abstract class E extends EnumEntry
 
   case class Foo(x: Int, y: String, z: Option[String]) {
     val otherVal = "not in schema"
@@ -21,30 +27,36 @@ object JsonSchemaTest {
 
   case class Nested(name: String, foo: Foo)
 
-  sealed abstract class E extends EnumEntry
-
-  object E extends Enum[E] with EnumSchema[E] {
-    case object E1 extends E
-    case object E2 extends E
-    override val values = findValues
-  }
-
-  sealed trait F extends EnumEntry
-  object F extends Enum[F] with EnumSchema[F] {
-    case object F1 extends F
-    case object F2 extends F
-    override val values = findValues
-  }
-
   case class X(e: E, f: F)
 
-  sealed trait ADT
-  case class Y(a: Int, b: Char, c: Option[Double]) extends ADT
-  case class Z(d: Symbol, e: Long) extends ADT
-  case class Z1(f: Symbol, g: Long) extends ADT
+  case class A(a: Int, b: Char, c: Option[Double]) extends ADT
+
+  case class B(d: Symbol, e: Long) extends ADT
+
+  case class C(foo: Foo, g: Long) extends ADT
+
+  object E extends Enum[E] with EnumSchema[E] {
+
+    override val values = findValues
+
+    case object E1 extends E
+
+    case object E2 extends E
+  }
+
+  object F extends Enum[F] with EnumSchema[F] {
+
+    override val values = findValues
+
+    case object F1 extends F
+
+    case object F2 extends F
+  }
+
 }
 
 class JsonSchemaTest extends FreeSpec {
+
   import JsonSchemaTest._
 
   val fooSchema = JsonSchema.deriveFor[Foo]
@@ -73,8 +85,8 @@ class JsonSchemaTest extends FreeSpec {
           |  }
           |}
           |
-        """.stripMargin) should === (Right(fooSchema.asJson))
-      fooSchema.id should === (id[Foo])
+        """.stripMargin) should ===(Right(fooSchema.asJson))
+      fooSchema.id should ===(id[Foo])
     }
 
     "handles nested case classes" in {
@@ -82,24 +94,26 @@ class JsonSchemaTest extends FreeSpec {
       val schema = JsonSchema.deriveFor[Nested]
       parser.parse(
         s"""
-          |{
-          |  "type": "object",
-          |  "required" : [
-          |    "name",
-          |    "foo"
-          |  ],
-          |  "properties" : {
-          |    "name" : {
-          |      "type" : "string"
-          |    },
-          |    "foo" : {
-          |      "$ref" : "${id[Foo]}"
-          |    }
-          |  }
-          |}
-          |
-          """.stripMargin) should === (Right(schema.asJson))
+           |{
+           |  "type": "object",
+           |  "required" : [
+           |    "name",
+           |    "foo"
+           |  ],
+           |  "properties" : {
+           |    "name" : {
+           |      "type" : "string"
+           |    },
+           |    "foo" : {
+           |      "$ref" : "#/definitions/${id[Foo]}"
+           |    }
+           |  }
+           |}
+           |
+          """.stripMargin) should ===(Right(schema.asJson))
+
       schema.id should ===(id[Nested])
+      schema.relatedDefinitions should ===(Set(fs.definition))
     }
 
     "with types extending enumeratum.EnumEntry" - {
@@ -137,7 +151,7 @@ class JsonSchemaTest extends FreeSpec {
             |  }
             |}
             |
-          """.stripMargin) should === (Right(schema.asJson))
+          """.stripMargin) should ===(Right(schema.asJson))
       }
     }
 
@@ -150,28 +164,33 @@ class JsonSchemaTest extends FreeSpec {
             "type" : "object",
             "allOf" : [
               {
-                "$ref": "${id[Y]}"
+                "$ref": "#/definitions/${id[A]}"
               },
               {
-                "$ref": "${id[Z]}"
+                "$ref": "#/definitions/${id[B]}"
               },
               {
-                "$ref": "${id[Z1]}"
+                "$ref": "#/definitions/${id[C]}"
               }
             ]
           }
-        """.stripMargin) should === (Right(schema.asJson))
+        """.stripMargin) should ===(Right(schema.asJson))
       }
 
       "provides JSON definitions of the coproduct" in {
+        implicit val fs: JsonSchema[Foo] = fooSchema
         val schema = JsonSchema.deriveFor[ADT]
-        val ySchema = JsonSchema.deriveFor[Y]
-        val zSchema = JsonSchema.deriveFor[Z]
-        val z1Schema = JsonSchema.deriveFor[Z1]
+        val ySchema = JsonSchema.deriveFor[A]
+        val zSchema = JsonSchema.deriveFor[B]
 
-        schema.definitions(0) should === (ySchema.definition)
-        schema.definitions(1) should === (zSchema.definition)
-        schema.definitions(2) should === (z1Schema.definition)
+        val z1Schema = JsonSchema.deriveFor[C]
+
+        schema.relatedDefinitions should ===(Set(
+          ySchema.definition,
+          zSchema.definition,
+          z1Schema.definition,
+          fooSchema.definition
+        ))
       }
     }
   }

@@ -16,11 +16,13 @@ object OperationParameter {
   }
 }
 
-trait OperationParameter {
+trait OperationParameter extends HasSchema {
   def name: String
   def required: Boolean
   def description: Option[String]
   def mandatory: OperationParameter
+  def schema: Option[JsonSchema.Ref] = None
+
   protected def as[T <: Type](t: T): OperationParameter
   def asInteger = as(Type.Integer)
   def asNumber = as(Type.Number)
@@ -31,7 +33,7 @@ trait OperationParameter {
 case class BodyParameter(description: Option[String] = None,
                          required: Boolean = false,
                          name: String = "body",
-                         schema: Option[JsonSchema.Ref] = None) extends OperationParameter {
+                         override val schema: Option[JsonSchema.Ref] = None) extends OperationParameter {
   override def mandatory = copy(required = true)
   override def as[T <: Type](t: T) = this
 }

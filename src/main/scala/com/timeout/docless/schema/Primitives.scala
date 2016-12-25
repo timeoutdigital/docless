@@ -60,6 +60,9 @@ trait Primitives {
      "items" -> implicitly[JsonSchema[A]].asJson
    )))
 
+  implicit def optSchema[A: JsonSchema]: JsonSchema[Option[A]] =
+    inlineInstance[Option[A]](implicitly[JsonSchema[A]].jsonObject)
+
   implicit def mapSchema[K, V](
     implicit
     kPattern: PatternProperty[K],

@@ -21,39 +21,43 @@ trait Auto {
       witness: Witness.Aux[K],
       lazyHSchema: Lazy[JsonSchema[H]],
       tSchema: JsonSchema[T]
-  ): JsonSchema[FieldType[K, H] :: T] = instance {
+  ): JsonSchema[FieldType[K, H] :: T] = instanceAndRelated {
     val hSchema = lazyHSchema.value
-    val hValue = if (hSchema.inline) hSchema.asJson else hSchema.asJsonRef
+    val (hValue, related) =
+      if (hSchema.inline)
+        hSchema.asJson -> tSchema.relatedDefinitions
+      else
+        hSchema.asJsonRef -> (tSchema.relatedDefinitions + hSchema.definition)
+
     val hField = witness.value.name -> hValue
     val tFields = tSchema.jsonObject.toList
-    JsonObject.fromIterable(hField :: tFields)
+
+    JsonObject.fromIterable(hField :: tFields) -> related
   }
 
   implicit def cnilSchema: JsonSchema[CNil] =
-    instance(sys.error("Unreachable code JsonSchema[CNil]"))
+    instance { sys.error("Unreachable code JsonSchema[CNil]") }
 
   implicit def coproductSchema[H, T <: Coproduct, L <: Nat](
     implicit
-    hSchema: Lazy[JsonSchema[H]],
+    lazyHSchema: Lazy[JsonSchema[H]],
     tSchema: JsonSchema[T],
     tLength: coproduct.Length.Aux[T, L],
     ev: H <:!< EnumEntry
   ): JsonSchema[H :+: T] = {
     val prop = "allOf"
-    val hJson = hSchema.value.asJsonRef
-    val (tDefs, tJson) =
-         if (tLength() == Nat._0)
-           Nil -> Nil
-         else {
-           val c = tSchema.asJson.hcursor
-           tSchema.coproductDefinitions -> c.get[List[Json]](prop)
-             .valueOr(const(Nil))
-         }
-
-    instance(
-      JsonObject.singleton(prop, Json.arr(hJson :: tJson: _*)),
-      hSchema.value.definition :: tDefs
-    )
+    val hSchema = lazyHSchema.value
+    val hJson = hSchema.asJsonRef
+    instanceAndRelated {
+      if (tLength() == Nat._0)
+        JsonObject.singleton(prop, Json.arr(hJson)) -> hSchema.definitions
+      else {
+        val c = tSchema.asJson.hcursor
+        val arr = hJson :: c.get[List[Json]](prop).valueOr(const(Nil))
+        val defs = tSchema.relatedDefinitions + hSchema.definition
+        JsonObject.singleton(prop, Json.arr(arr: _*)) -> defs
+      }
+    }
   }
 
   implicit def genericSchema[A, R <: HList](
@@ -62,16 +66,14 @@ trait Auto {
     rSchema: JsonSchema[R],
     fields: Required.Fields[R],
     tag: ru.WeakTypeTag[A]
-  ): JsonSchema[A] = {
-    instance[A](JsonObject.fromMap(Map(
-      "type" -> Json.fromString("object"),
-      "required" -> fields.asJson,
-      "properties" -> rSchema.jsonObject.asJson
-    )))
-  }
-
-  implicit def optSchema[A: JsonSchema]: JsonSchema[Option[A]] =
-    inlineInstance[Option[A]](implicitly[JsonSchema[A]].jsonObject)
+  ): JsonSchema[A] =
+    instanceAndRelated[A] {
+      JsonObject.fromMap(Map(
+        "type" -> Json.fromString("object"),
+        "required" -> fields.asJson,
+        "properties" -> rSchema.jsonObject.asJson
+      )) -> rSchema.relatedDefinitions
+    }
 
   @implicitNotFound(msg = "cannot derive coproduct")
   implicit def genericCoprodSchema[A, R <: Coproduct](
@@ -80,9 +82,11 @@ trait Auto {
     rSchema: JsonSchema[R],
     tag: ru.WeakTypeTag[A]
   ): JsonSchema[A] =
-    instance[A](
-      rSchema.jsonObject.+:("type" -> "object".asJson),
-      rSchema.coproductDefinitions)
+    instanceAndRelated[A] {
+      rSchema.jsonObject.+:(
+        "type" -> "object".asJson
+      ) -> rSchema.relatedDefinitions
+    }
 
   def deriveFor[A](implicit ev: JsonSchema[A]): JsonSchema[A] = ev
 }

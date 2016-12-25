@@ -15,7 +15,7 @@ trait JsonSchema[A] extends JsonSchema.HasRef {
 
   def inline: Boolean
 
-  def coproductDefinitions: List[JsonSchema.Definition]
+  def relatedDefinitions: Set[JsonSchema.Definition]
 
   def jsonObject: JsonObject
 
@@ -27,11 +27,11 @@ trait JsonSchema[A] extends JsonSchema.HasRef {
 
   def asJsonRef: Json = asObjectRef.asJson
 
-  def definition: JsonSchema.Definition =
+  lazy val definition: JsonSchema.Definition =
     JsonSchema.Definition(id, asJson)
 
-  def definitions: List[JsonSchema.Definition] =
-    coproductDefinitions :+ definition
+  def definitions: Set[JsonSchema.Definition] =
+    relatedDefinitions + definition
 
   def asResponse(description: String): Response =
     Response(description, schema = Some(asRef))
@@ -77,17 +77,25 @@ object JsonSchema extends Primitives with Auto {
       fromRegex[K](".*".r)
   }
 
-  def instance[A](obj: => JsonObject, defs: List[Definition] = Nil)(implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] = new JsonSchema[A] {
+  def instance[A](obj: => JsonObject)(implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] = new JsonSchema[A] {
     override def id = tag.tpe.typeSymbol.fullName
     override def inline = false
     override def jsonObject = obj
-    override def coproductDefinitions = defs
+    override def relatedDefinitions = Set.empty
   }
+
+  def instanceAndRelated[A](pair: => (JsonObject, Set[Definition]))(implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] = new JsonSchema[A] {
+    override def id = tag.tpe.typeSymbol.fullName
+    override def inline = false
+    override def jsonObject = pair._1
+    override def relatedDefinitions = pair._2
+  }
+
 
   def inlineInstance[A](obj: => JsonObject)(implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] = new JsonSchema[A] {
     override def id = tag.tpe.typeSymbol.fullName
     override def inline = true
-    override def coproductDefinitions = Nil
+    override def relatedDefinitions = Set.empty
     override def jsonObject = obj
   }
 
