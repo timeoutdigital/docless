@@ -17,11 +17,11 @@ object Swagger {
   implicit val licenseEncoder: Encoder[Info.License] =
     deriveEncoder[Info.License]
   implicit val infoEncoder: Encoder[Info] = deriveEncoder[Info]
-  implicit val externalDocEnc = deriveEncoder[ExternalDocs]
+  implicit val externalDocEnc             = deriveEncoder[ExternalDocs]
 
   implicit val securitySchemeEncoder = Encoder.instance[SecurityScheme] { s =>
     val common = Map(
-      "name" -> s.name.asJson,
+      "name"        -> s.name.asJson,
       "description" -> s.description.asJson
     )
 
@@ -32,11 +32,11 @@ object Swagger {
         Map("type" -> "api_key".asJson, "in" -> in.asJson)
       case OAuth2(_, flow, authUrl, tokenUrl, scopes, _) =>
         Map(
-          "type" -> "oauth2".asJson,
-          "flow" -> flow.asJson,
+          "type"             -> "oauth2".asJson,
+          "flow"             -> flow.asJson,
           "authorizationUrl" -> authUrl.asJson,
-          "tokenUrl" -> tokenUrl.asJson,
-          "scopes" -> scopes.asJson
+          "tokenUrl"         -> tokenUrl.asJson,
+          "scopes"           -> scopes.asJson
         )
     }
     Json.fromFields(common ++ other)
@@ -45,8 +45,8 @@ object Swagger {
   implicit val operationParameterEnc: Encoder[OperationParameter] =
     Encoder.instance[OperationParameter] { p =>
       val common = Map(
-        "name" -> p.name.asJson,
-        "required" -> p.required.asJson,
+        "name"        -> p.name.asJson,
+        "required"    -> p.required.asJson,
         "description" -> p.description.asJson
       )
       val other = p match {
@@ -54,17 +54,17 @@ object Swagger {
           Map("schema" -> schema.asJson, "in" -> "body".asJson)
         case Parameter(_, _, in, _, typ, format) =>
           Map(
-            "in" -> in.asJson,
-            "type" -> typ.asJson,
+            "in"     -> in.asJson,
+            "type"   -> typ.asJson,
             "format" -> format.asJson
           )
         case ArrayParameter(_, _, in, _, itemType, cFormat, minMax, format) =>
           Map(
-            "in" -> in.asJson,
-            "type" -> "array".asJson,
-            "items" -> Json.obj("type" -> itemType.asJson),
+            "in"               -> in.asJson,
+            "type"             -> "array".asJson,
+            "items"            -> Json.obj("type" -> itemType.asJson),
             "collectionFormat" -> cFormat.asJson,
-            "format" -> format.asJson
+            "format"           -> format.asJson
           )
       }
       Json.fromFields(common ++ other)
@@ -86,7 +86,7 @@ object Swagger {
       Json.obj("$ref" -> Json.fromString(s"#/definitions/$id"))
   }
 
-  implicit val headerEnc = deriveEncoder[Responses.Header]
+  implicit val headerEnc   = deriveEncoder[Responses.Header]
   implicit val responseEnc = deriveEncoder[Responses.Response]
   implicit val responsesEnc = Encoder.instance[Responses] { rs =>
     rs.byStatusCode.map { case (code, resp) => code -> resp.asJson }.asJson

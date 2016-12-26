@@ -11,7 +11,8 @@ import enumeratum.{Enum, EnumEntry}
 
 @implicitNotFound(
   msg =
-    "Cannot derive a JsonSchema for ${A}. Please verify that instances can be derived for all its fields")
+    "Cannot derive a JsonSchema for ${A}. Please verify that instances can be derived for all its fields"
+)
 trait JsonSchema[A] extends JsonSchema.HasRef {
   def id: String
 
@@ -46,7 +47,7 @@ trait JsonSchema[A] extends JsonSchema.HasRef {
 object JsonSchema extends Primitives with Auto {
   trait HasRef {
     def id: String
-    def asRef: Ref = TypeRef(id)
+    def asRef: Ref      = TypeRef(id)
     def asArrayRef: Ref = ArrayRef(id)
   }
 
@@ -59,13 +60,13 @@ object JsonSchema extends Primitives with Auto {
   case class TypeRef(id: String) extends Ref
   object TypeRef {
     def apply(definition: Definition): TypeRef = TypeRef(definition.id)
-    def apply(schema: JsonSchema[_]): TypeRef = TypeRef(schema.id)
+    def apply(schema: JsonSchema[_]): TypeRef  = TypeRef(schema.id)
   }
 
   case class ArrayRef(id: String) extends Ref
   object ArrayRef {
     def apply(definition: Definition): ArrayRef = ArrayRef(definition.id)
-    def apply(schema: JsonSchema[_]): ArrayRef = ArrayRef(schema.id)
+    def apply(schema: JsonSchema[_]): ArrayRef  = ArrayRef(schema.id)
   }
 
   trait PatternProperty[K] {
@@ -80,29 +81,34 @@ object JsonSchema extends Primitives with Auto {
       fromRegex[K](".*".r)
   }
 
-  def instance[A](obj: => JsonObject)(
-      implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] = new JsonSchema[A] {
-    override def id = tag.tpe.typeSymbol.fullName
-    override def inline = false
-    override def jsonObject = obj
-    override def relatedDefinitions = Set.empty
-  }
+  def instance[A](
+      obj: => JsonObject
+  )(implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] =
+    new JsonSchema[A] {
+      override def id                 = tag.tpe.typeSymbol.fullName
+      override def inline             = false
+      override def jsonObject         = obj
+      override def relatedDefinitions = Set.empty
+    }
 
-  def instanceAndRelated[A](pair: => (JsonObject, Set[Definition]))(
-      implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] = new JsonSchema[A] {
-    override def id = tag.tpe.typeSymbol.fullName
-    override def inline = false
-    override def jsonObject = pair._1
+  def instanceAndRelated[A](
+      pair: => (JsonObject, Set[Definition])
+  )(implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] = new JsonSchema[A] {
+    override def id                 = tag.tpe.typeSymbol.fullName
+    override def inline             = false
+    override def jsonObject         = pair._1
     override def relatedDefinitions = pair._2
   }
 
-  def inlineInstance[A](obj: => JsonObject)(
-      implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] = new JsonSchema[A] {
-    override def id = tag.tpe.typeSymbol.fullName
-    override def inline = true
-    override def relatedDefinitions = Set.empty
-    override def jsonObject = obj
-  }
+  def inlineInstance[A](
+      obj: => JsonObject
+  )(implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] =
+    new JsonSchema[A] {
+      override def id                 = tag.tpe.typeSymbol.fullName
+      override def inline             = true
+      override def relatedDefinitions = Set.empty
+      override def jsonObject         = obj
+    }
 
   def enum[A](values: Seq[String]): JsonSchema[A] =
     inlineInstance(Map("enum" -> values.asJson).asJsonObject)

@@ -29,7 +29,7 @@ object SecurityScheme {
     sealed trait In extends EnumEntry with EnumEntry.Lowercase
 
     object In extends Enum[In] with CirceEnum[In] {
-      case object Query extends In
+      case object Query  extends In
       case object Header extends In
       override def values = findValues
     }
@@ -40,10 +40,10 @@ object SecurityScheme {
     sealed trait Flow extends EnumEntry with EnumEntry.Lowercase
 
     object Flow extends Enum[Flow] with CirceEnum[Flow] {
-      case object Implicit extends Flow
-      case object Password extends Flow
+      case object Implicit    extends Flow
+      case object Password    extends Flow
       case object Application extends Flow
-      case object AccessCode extends Flow
+      case object AccessCode  extends Flow
 
       override def values = findValues
     }

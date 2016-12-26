@@ -15,6 +15,9 @@ object Responses {
       extends HasSchema {
 
     def withHeaders(hs: (HeaderName, Header)*) = copy(headers = hs.toMap)
+
+    def as[A](implicit ev: JsonSchema[A]): Response = copy(schema = Some(ev.asRef))
+    def asArrayOf[A](implicit ev: JsonSchema[A]): Response = copy(schema = Some(ev.asArrayRef))
   }
 
   val default = Responses(

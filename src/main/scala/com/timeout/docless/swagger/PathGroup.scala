@@ -22,7 +22,8 @@ object PathGroup {
 
   def aggregate(
       info: Info,
-      groups: List[PathGroup]): ValidatedNel[SchemaError, APISchema] = {
+      groups: List[PathGroup]
+  ): ValidatedNel[SchemaError, APISchema] = {
     val g = groups.combineAll
 
     def isDefined(ctx: RefWithContext): Boolean =
@@ -36,7 +37,8 @@ object PathGroup {
 
     if (errors.nonEmpty)
       Validated.invalid[NonEmptyList[SchemaError], APISchema](
-        NonEmptyList.fromListUnsafe(errors))
+        NonEmptyList.fromListUnsafe(errors)
+      )
     else
       Validated.valid {
         APISchema(
@@ -54,12 +56,13 @@ object PathGroup {
 
   def apply(ps: List[Path],
             defs: List[Definition],
-            _params: List[OperationParameter]): PathGroup = new PathGroup {
+            _params: List[OperationParameter]): PathGroup =
+    new PathGroup {
 
-    override val paths = ps
-    override val definitions = defs
-    override val params = _params
-  }
+      override val paths       = ps
+      override val definitions = defs
+      override val params      = _params
+    }
 
   implicit val pgEq: Eq[PathGroup] = Eq.fromUniversalEquals
 
@@ -67,9 +70,11 @@ object PathGroup {
     override def empty: PathGroup = Empty
 
     override def combine(x: PathGroup, y: PathGroup): PathGroup =
-      PathGroup(x.paths |+| y.paths,
-                x.definitions |+| y.definitions,
-                x.params |+| y.params)
+      PathGroup(
+        x.paths |+| y.paths,
+        x.definitions |+| y.definitions,
+        x.params |+| y.params
+      )
   }
 
 }

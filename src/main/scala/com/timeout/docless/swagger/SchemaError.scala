@@ -12,8 +12,8 @@ object SchemaError {
 
   implicit val mdShow: Show[SchemaError] = Show.show {
     case MissingDefinition(ParamRef(r, path, param)) =>
-      s"$path: cannot find definition ${r.id} for parameter name $param"
+      s"$path: cannot find definition '${r.id}' for parameter name '$param'"
     case MissingDefinition(ResponseRef(r, path, method)) =>
-      s"$path: cannot find response definition ${r.id} for method ${method.entryName}"
+      s"$path: cannot find response definition '${r.id}' for method '${method.entryName}'"
   }
 }

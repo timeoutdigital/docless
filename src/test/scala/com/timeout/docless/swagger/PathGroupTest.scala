@@ -11,19 +11,19 @@ import com.timeout.docless.swagger.Path._
 class PathGroupTest extends FreeSpec with Matchers {
   "PathGroup" - {
     val petstore = PetstoreSchema()
-    val pet = PetstoreSchema.Schemas.pet
+    val pet      = PetstoreSchema.Schemas.pet
 
-    val paths = Path("example") :: petstore.paths.get.toList
-    val defs = petstore.definitions.get.toList
+    val paths     = Path("example") :: petstore.paths.get.toList
+    val defs      = petstore.definitions.get.toList
     val defsNoPet = defs.filterNot(_.id === pet.id)
-    val params =  petstore.parameters.get.toList
+    val params    = petstore.parameters.get.toList
 
-    val group1 = PathGroup(paths, defs, params)
-    val group2 = PathGroup(List(Path("extra")), Nil, Nil)
+    val group1          = PathGroup(paths, defs, params)
+    val group2          = PathGroup(List(Path("extra")), Nil, Nil)
     val groupMissingErr = PathGroup(paths, defsNoPet, params)
 
-    def err(path: String, m: Method): SchemaError =
-      missingDefinition(ResponseRef(ArrayRef(pet), path, m))
+    def err(path: String, m: Method, f: Definition => Ref): SchemaError =
+      missingDefinition(ResponseRef(f(pet.definition), path, m))
 
     "aggregate" - {
       "when some definitions are missing" - {
@@ -31,10 +31,10 @@ class PathGroupTest extends FreeSpec with Matchers {
           PathGroup.aggregate(petstore.info, List(groupMissingErr)) should ===(
             Validated.invalid[NonEmptyList[SchemaError], APISchema](
               NonEmptyList.of(
-                err("/pets", Get),
-                err("/pets", Post),
-                err("/pets/{id}", Get),
-                err("/pets/{id}", Delete)
+                err("/pets", Get, ArrayRef.apply),
+                err("/pets", Post, TypeRef.apply),
+                err("/pets/{id}", Get, TypeRef.apply),
+                err("/pets/{id}", Delete, TypeRef.apply)
               )
             )
           )
@@ -46,7 +46,9 @@ class PathGroupTest extends FreeSpec with Matchers {
             case Validated.Valid(schema) =>
               schema.info should ===(petstore.info)
               schema.paths.get should ===(group1.paths ++ group2.paths)
-              schema.definitions.get should ===(group1.definitions ++ group2.definitions)
+              schema.definitions.get should ===(
+                group1.definitions ++ group2.definitions
+              )
               schema.parameters.get should ===(group1.params ++ group2.params)
           }
         }
@@ -54,4 +56,3 @@ class PathGroupTest extends FreeSpec with Matchers {
     }
   }
 }
-

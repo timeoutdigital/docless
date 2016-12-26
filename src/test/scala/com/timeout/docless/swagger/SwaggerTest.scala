@@ -13,15 +13,17 @@ import scala.collection.JavaConverters._
 class SwaggerTest extends FreeSpec {
   "Can build and serialise a swagger object" in {
     val petstoreSchema = PetstoreSchema()
-    val json = JsonLoader.fromResource("/swagger-schema.json")
-    val schema = JsonSchemaFactory.byDefault().getJsonSchema(json)
-    val printer = Printer.spaces2.copy(dropNullKeys = true)
-    val jsonS = printer.pretty(petstoreSchema.asJson)
-    val report = schema.validate(JsonLoader.fromString(jsonS))
+    val json           = JsonLoader.fromResource("/swagger-schema.json")
+    val schema         = JsonSchemaFactory.byDefault().getJsonSchema(json)
+    val printer        = Printer.spaces2.copy(dropNullKeys = true)
+    val jsonS          = printer.pretty(petstoreSchema.asJson)
+    val report         = schema.validate(JsonLoader.fromString(jsonS))
 
     if (!report.isSuccess) {
       println(jsonS)
-      println("============== Validation errors ================================")
+      println(
+        "============== Validation errors ================================"
+      )
       val errors = report.asScala.toList
       errors.foreach(println)
       fail()

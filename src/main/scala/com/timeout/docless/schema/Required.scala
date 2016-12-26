@@ -35,7 +35,8 @@ object Required {
     implicit def hlistFields[K <: Symbol, H, T <: HList](
         implicit witness: Witness.Aux[K],
         req: Lazy[Required[H]],
-        tFields: Fields[T]): Fields[FieldType[K, H] :: T] = instance {
+        tFields: Fields[T]
+    ): Fields[FieldType[K, H] :: T] = instance {
       if (req.value.isRequired)
         witness.value.name :: tFields.get
       else

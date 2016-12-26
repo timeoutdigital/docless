@@ -63,53 +63,52 @@ class JsonSchemaTest extends FreeSpec {
 
   "automatic derivation" - {
     "handles plain case classes" in {
-      parser.parse(
-        """
-          |{
-          |  "type": "object",
-          |  "required" : [
-          |    "x",
-          |    "y"
-          |  ],
-          |  "properties" : {
-          |    "x" : {
-          |      "type" : "integer",
-          |      "format": "int32"
-          |    },
-          |    "y" : {
-          |      "type" : "string"
-          |    },
-          |    "z" : {
-          |      "type" : "string"
-          |    }
-          |  }
-          |}
-          |
+      parser.parse("""
+                     |{
+                     |  "type": "object",
+                     |  "required" : [
+                     |    "x",
+                     |    "y"
+                     |  ],
+                     |  "properties" : {
+                     |    "x" : {
+                     |      "type" : "integer",
+                     |      "format": "int32"
+                     |    },
+                     |    "y" : {
+                     |      "type" : "string"
+                     |    },
+                     |    "z" : {
+                     |      "type" : "string"
+                     |    }
+                     |  }
+                     |}
+                     |
         """.stripMargin) should ===(Right(fooSchema.asJson))
       fooSchema.id should ===(id[Foo])
     }
 
     "handles nested case classes" in {
       implicit val fs: JsonSchema[Foo] = fooSchema
+
       val schema = JsonSchema.deriveFor[Nested]
-      parser.parse(
-        s"""
-           |{
-           |  "type": "object",
-           |  "required" : [
-           |    "name",
-           |    "foo"
-           |  ],
-           |  "properties" : {
-           |    "name" : {
-           |      "type" : "string"
-           |    },
-           |    "foo" : {
-           |      "$ref" : "#/definitions/${id[Foo]}"
-           |    }
-           |  }
-           |}
-           |
+      parser.parse(s"""
+                      |{
+                      |  "type": "object",
+                      |  "required" : [
+                      |    "name",
+                      |    "foo"
+                      |  ],
+                      |  "properties" : {
+                      |    "name" : {
+                      |      "type" : "string"
+                      |    },
+                      |    "foo" : {
+                      |      "$ref" : "#/definitions/${id[Foo]}"
+                      |    }
+                      |  }
+                      |}
+                      |
           """.stripMargin) should ===(Right(schema.asJson))
 
       schema.id should ===(id[Nested])
@@ -133,24 +132,23 @@ class JsonSchemaTest extends FreeSpec {
       "encodes enums when the EnumSchema[T] trait is extended" in {
         val schema = JsonSchema.deriveFor[X]
 
-        parser.parse(
-          """
-            |{
-            |  "type": "object",
-            |  "required" : [
-            |    "e",
-            |    "f"
-            |  ],
-            |  "properties" : {
-            |    "e" : {
-            |      "enum" : ["E1", "E2"]
-            |    },
-            |    "f" : {
-            |      "enum" : ["F1", "F2"]
-            |    }
-            |  }
-            |}
-            |
+        parser.parse("""
+                       |{
+                       |  "type": "object",
+                       |  "required" : [
+                       |    "e",
+                       |    "f"
+                       |  ],
+                       |  "properties" : {
+                       |    "e" : {
+                       |      "enum" : ["E1", "E2"]
+                       |    },
+                       |    "f" : {
+                       |      "enum" : ["F1", "F2"]
+                       |    }
+                       |  }
+                       |}
+                       |
           """.stripMargin) should ===(Right(schema.asJson))
       }
     }
@@ -158,8 +156,7 @@ class JsonSchemaTest extends FreeSpec {
     "with ADTs" - {
       "generates a union schema using the allOf keyword" in {
         val schema = JsonSchema.deriveFor[ADT]
-        parser.parse(
-          s"""
+        parser.parse(s"""
           {
             "type" : "object",
             "allOf" : [
@@ -179,18 +176,20 @@ class JsonSchemaTest extends FreeSpec {
 
       "provides JSON definitions of the coproduct" in {
         implicit val fs: JsonSchema[Foo] = fooSchema
-        val schema = JsonSchema.deriveFor[ADT]
-        val ySchema = JsonSchema.deriveFor[A]
-        val zSchema = JsonSchema.deriveFor[B]
+        val schema                       = JsonSchema.deriveFor[ADT]
+        val ySchema                      = JsonSchema.deriveFor[A]
+        val zSchema                      = JsonSchema.deriveFor[B]
 
         val z1Schema = JsonSchema.deriveFor[C]
 
-        schema.relatedDefinitions should ===(Set(
-          ySchema.definition,
-          zSchema.definition,
-          z1Schema.definition,
-          fooSchema.definition
-        ))
+        schema.relatedDefinitions should ===(
+          Set(
+            ySchema.definition,
+            zSchema.definition,
+            z1Schema.definition,
+            fooSchema.definition
+          )
+        )
       }
     }
   }

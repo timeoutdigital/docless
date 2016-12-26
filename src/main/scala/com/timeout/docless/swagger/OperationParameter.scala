@@ -7,10 +7,10 @@ object OperationParameter {
   sealed trait In extends EnumEntry with EnumEntry.Lowercase
 
   object In extends Enum[In] with CirceEnum[In] {
-    case object Path extends In
-    case object Query extends In
+    case object Path   extends In
+    case object Query  extends In
     case object Header extends In
-    case object Form extends In
+    case object Form   extends In
 
     override def values = findValues
   }
@@ -23,11 +23,9 @@ trait OperationParameter extends HasSchema {
   def mandatory: OperationParameter
   def schema: Option[JsonSchema.Ref] = None
 
-  protected def as[T <: Type](t: T): OperationParameter
-  def asInteger = as(Type.Integer)
-  def asNumber = as(Type.Number)
-  def asFile = as(Type.File)
-  def asBoolean = as(Type.Boolean)
+  protected def setType[T <: Type](t: T): OperationParameter
+
+  def as[T](implicit ev: Type.Primitive[T]) = setType(ev.get)
 }
 
 case class BodyParameter(description: Option[String] = None,
@@ -36,7 +34,7 @@ case class BodyParameter(description: Option[String] = None,
                          override val schema: Option[JsonSchema.Ref] = None)
     extends OperationParameter {
   override def mandatory = copy(required = true)
-  override def as[T <: Type](t: T) = this
+  override def setType[T <: Type](t: T) = this
 }
 
 case class ArrayParameter(name: String,
@@ -49,7 +47,7 @@ case class ArrayParameter(name: String,
                           format: Option[Format] = None)
     extends OperationParameter {
 
-  def as[T <: Type](t: T) = copy(`itemType` = t)
+  def setType[T <: Type](t: T) = copy(`itemType` = t)
 
   override def mandatory = copy(required = true)
 }
@@ -62,8 +60,8 @@ case class Parameter(name: String,
                      format: Option[Format] = None)
     extends OperationParameter {
 
-  def as[T <: Type](t: T) = copy(`type` = t)
-  override def mandatory = copy(required = true)
+  def setType[T <: Type](t: T) = copy(`type` = t)
+  override def mandatory  = copy(required = true)
 }
 
 object Parameter {
@@ -72,22 +70,26 @@ object Parameter {
             description: Option[String] = None,
             `type`: Type = Type.String,
             format: Option[Format] = None) =
-    apply(name,
-          required = false,
-          OperationParameter.In.Query,
-          description,
-          `type`,
-          format)
+    apply(
+      name,
+      required = false,
+      OperationParameter.In.Query,
+      description,
+      `type`,
+      format
+    )
 
   def path(name: String,
            description: Option[String] = None,
            `type`: Type = Type.String,
            format: Option[Format] = None,
            default: Option[String] = None) =
-    apply(name,
-          required = true,
-          OperationParameter.In.Path,
-          description,
-          `type`,
-          format)
+    apply(
+      name,
+      required = true,
+      OperationParameter.In.Path,
+      description,
+      `type`,
+      format
+    )
 }

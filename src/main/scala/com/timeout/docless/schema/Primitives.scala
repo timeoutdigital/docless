@@ -2,7 +2,7 @@ package com.timeout.docless.schema
 
 import java.time.{LocalDate, LocalDateTime}
 
-import com.timeout.docless.schema.JsonSchema.{PatternProperty, inlineInstance}
+import com.timeout.docless.schema.JsonSchema.{inlineInstance, PatternProperty}
 import io.circe._
 import io.circe.syntax._
 
@@ -12,27 +12,31 @@ trait Primitives {
 
   implicit val intSchema: JsonSchema[Int] = inlineInstance[Int](
     Map(
-      "type" -> "integer",
+      "type"   -> "integer",
       "format" -> "int32"
-    ).asJsonObject)
+    ).asJsonObject
+  )
 
   implicit val longSchema: JsonSchema[Long] = inlineInstance[Long](
     Map(
-      "type" -> "integer",
+      "type"   -> "integer",
       "format" -> "int64"
-    ).asJsonObject)
+    ).asJsonObject
+  )
 
   implicit val floatSchema: JsonSchema[Float] = inlineInstance[Float](
     Map(
-      "type" -> "number",
+      "type"   -> "number",
       "format" -> "float"
-    ).asJsonObject)
+    ).asJsonObject
+  )
 
   implicit val doubleSchema: JsonSchema[Double] = inlineInstance[Double](
     Map(
-      "type" -> "number",
+      "type"   -> "number",
       "format" -> "double"
-    ).asJsonObject)
+    ).asJsonObject
+  )
 
   implicit val strSchema: JsonSchema[String] =
     inlineInstance[String](Map("type" -> "string").asJsonObject)
@@ -42,33 +46,38 @@ trait Primitives {
 
   implicit val byteSchema: JsonSchema[Byte] = inlineInstance[Byte](
     Map(
-      "type" -> "string",
+      "type"   -> "string",
       "format" -> "byte"
-    ).asJsonObject)
+    ).asJsonObject
+  )
 
   implicit val symSchema: JsonSchema[Symbol] =
     inlineInstance[Symbol](Map("type" -> "string").asJsonObject)
 
   implicit val dateSchema: JsonSchema[LocalDate] = inlineInstance[LocalDate](
     Map(
-      "type" -> "string",
+      "type"   -> "string",
       "format" -> "date"
-    ).asJsonObject)
+    ).asJsonObject
+  )
 
   implicit val dateTimeSchema: JsonSchema[LocalDateTime] =
     inlineInstance[LocalDateTime](
       Map(
-        "type" -> "string",
+        "type"   -> "string",
         "format" -> "date-time"
-      ).asJsonObject)
+      ).asJsonObject
+    )
 
   implicit def listSchema[A: JsonSchema]: JsonSchema[List[A]] =
     inlineInstance[List[A]](
       JsonObject.fromMap(
         Map(
-          "type" -> Json.fromString("array"),
+          "type"  -> Json.fromString("array"),
           "items" -> implicitly[JsonSchema[A]].asJson
-        )))
+        )
+      )
+    )
 
   implicit def optSchema[A: JsonSchema]: JsonSchema[Option[A]] =
     inlineInstance[Option[A]](implicitly[JsonSchema[A]].jsonObject)
@@ -84,7 +93,8 @@ trait Primitives {
               vSchema.asJson
             )
             .asJson
-        ))
+        )
+      )
     }
 
 }

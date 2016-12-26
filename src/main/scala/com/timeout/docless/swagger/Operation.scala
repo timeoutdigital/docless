@@ -19,8 +19,9 @@ case class Operation(responses: Responses = Responses.default,
 
   def withDescription(desc: String) = copy(description = Some(desc))
 
-  def responding(default: Responses.Response)(
-      rs: (Int, Responses.Response)*): Operation =
+  def responding(
+      default: Responses.Response
+  )(rs: (Int, Responses.Response)*): Operation =
     copy(responses = Responses(default, rs.toMap))
 }
 

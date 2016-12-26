@@ -15,7 +15,8 @@ import enumeratum.Enum
 
 trait Auto {
   implicit val hNilSchema: JsonSchema[HNil] = inlineInstance(
-    JsonObject.fromMap(Map.empty))
+    JsonObject.fromMap(Map.empty)
+  )
 
   implicit def hlistSchema[K <: Symbol, H, T <: HList](
       implicit witness: Witness.Aux[K],
@@ -29,7 +30,7 @@ trait Auto {
       else
         hSchema.asJsonRef -> (tSchema.relatedDefinitions + hSchema.definition)
 
-    val hField = witness.value.name -> hValue
+    val hField  = witness.value.name -> hValue
     val tFields = tSchema.jsonObject.toList
 
     JsonObject.fromIterable(hField :: tFields) -> related
@@ -44,15 +45,15 @@ trait Auto {
       tLength: coproduct.Length.Aux[T, L],
       ev: H <:!< EnumEntry
   ): JsonSchema[H :+: T] = {
-    val prop = "allOf"
+    val prop    = "allOf"
     val hSchema = lazyHSchema.value
-    val hJson = hSchema.asJsonRef
+    val hJson   = hSchema.asJsonRef
     instanceAndRelated {
       if (tLength() == Nat._0)
         JsonObject.singleton(prop, Json.arr(hJson)) -> hSchema.definitions
       else {
-        val c = tSchema.asJson.hcursor
-        val arr = hJson :: c.get[List[Json]](prop).valueOr(const(Nil))
+        val c    = tSchema.asJson.hcursor
+        val arr  = hJson :: c.get[List[Json]](prop).valueOr(const(Nil))
         val defs = tSchema.relatedDefinitions + hSchema.definition
         JsonObject.singleton(prop, Json.arr(arr: _*)) -> defs
       }
@@ -68,10 +69,11 @@ trait Auto {
     instanceAndRelated[A] {
       JsonObject.fromMap(
         Map(
-          "type" -> Json.fromString("object"),
-          "required" -> fields.asJson,
+          "type"       -> Json.fromString("object"),
+          "required"   -> fields.asJson,
           "properties" -> rSchema.jsonObject.asJson
-        )) -> rSchema.relatedDefinitions
+        )
+      ) -> rSchema.relatedDefinitions
     }
 
   @implicitNotFound(msg = "cannot derive coproduct")
@@ -91,7 +93,7 @@ trait Auto {
 
 object Auto {
   trait EnumSchema[A <: EnumEntry] { this: Enum[A] =>
-    implicit def jsonSchema(implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] =
+    implicit def schema(implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] =
       JsonSchema.enum(values = this.values.map(_.entryName))
   }
 }

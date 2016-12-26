@@ -12,8 +12,8 @@ case class APISchema(
     schemes: Set[Scheme] = Set.empty,
     consumes: Set[String] = Set.empty,
     produces: Set[String] = Set.empty,
-    definitions: Definitions = Definitions.empty)
-    extends ParamSetters[APISchema] {
+    definitions: Definitions = Definitions.empty
+) extends ParamSetters[APISchema] {
 
   def withPaths(ps: Path*): APISchema =
     copy(paths = Paths(ps))
