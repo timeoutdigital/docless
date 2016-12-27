@@ -1,0 +1,24 @@
+#!/usr/bin/env ruby
+require 'open3'
+
+loop do
+  fd = IO.sysopen "/dev/tty", "r"
+  io = IO.new(fd, 'r')
+  puts "Do you want to run 'sbt pandocReadme'? answer y/n:"
+  answer = io.gets.chomp
+
+  case answer
+  when 'y', 'yes'
+    Open3.popen2e('sbt pandocReadme') do |_, out_and_err, wait_thr|
+      out_and_err.each do |line|
+        $stderr.puts line
+      end
+      `git add README.md`
+      exit_code = wait_thr.value
+      $stderr.puts "> sbt exited with #{exit_code}"
+    end
+    break
+  when 'n', 'no'
+    break
+  end
+end

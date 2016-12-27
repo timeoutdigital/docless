@@ -8,5 +8,4 @@ before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y pandoc
 script:
-  sbt ++$TRAVIS_SCALA_VERSION test
-  sbt ++$TRAVIS_SCALA_VERSION pandocReadme
+  sbt ++$TRAVIS_SCALA_VERSION ';test;pandocReadme'
