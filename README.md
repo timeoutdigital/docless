@@ -87,7 +87,7 @@ The generated schema can be serialised to JSON by calling the `asJson`
 method, which will return a
 [Circe](https://github.com/travisbrown/circe) JSON ast.
 
-### Algebric data types
+### Algebraic data types
 
 ``` {.scala}
 sealed trait Contact
