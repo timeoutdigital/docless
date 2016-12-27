@@ -1,27 +1,22 @@
-# Docless
+## Why not just using Swagger-core?
 
-A scala DSL to generate JSON schema and [swagger](http://swagger.io) documentation for web services.
+While being to some extend usable for Scala projects, [swagger-core](https://github.com/swagger-api/swagger-core) suffers from some serious limitations:
 
-## Rationale: why this and not Swagger-core?
+- It heavily relies on Java runtime reflection to generate Json schemas for your data models. This might be fine for plain Java objects, but it does not really play well with case classes and sealed trait hierarchies, which are key Scala idioms.
 
-While being to some extent usable within Scala projects, [swagger-core](https://github.com/swagger-api/swagger-core) 
-has some serious limitations:
+- Swagger is built on top of JAX-RS annotations. These provide way more limited means of abstraction and code reuse than a DSL directly embedded into Scala. 
+## Installation 
 
-- The library heavily relies on Java runtime reflection to generate
-schemas for your data models. This might work just fine for plain
-Java objects, but it does not really play well with case classes and 
-sealed trait hierarchies, which are key to writing idiomatic Scala.
+Add the following to your `build.sbt`
 
-- As Swagger is built on top of JAX-RS annotations, it provides way more limited 
-means of abstraction and code reuse than a DSL directly embedded into Scala.
+```scala
+resolvers += Resolver.bintrayRepo("topublic", "maven")
 
-## Feature overview
-
+libraryDependencies + "com.timeout" %% "docless" % "0.1.0"
+```
 ### JSON schema derivation
 
-This project uses Shapeless to automatically derive JSON schemas for case classes
-and ADTs at compile time. By scraping unnecessary boilerplate code, this approach 
-helps keeping documentation in sync with the relevant business entities.
+This project uses Shapeless to automatically derive JSON schemas for case classes and ADTs at compile time. By scraping unnecessary boilerplate code, this approach helps keeping documentation in sync with the relevant business entities.
 
 ```tut:silent
 import com.timeout.docless.schema._
@@ -33,16 +28,13 @@ val petSchema = JsonSchema.deriveFor[Pet]
 
 #### Case classes
 
-Given a case class, generating a JSON schema is as easy as calling the `deriveFor`
-method supplying `Pet` as the type parameter.
+Given a case class, generating a JSON schema is as easy as calling the `deriveFor` method supplying `Pet` as the type parameter.
 
 ```tut
 petSchema.asJson
 ```
 
-The generated schema can be serialised to JSON by calling the `asJson` method, 
-which will return a [Circe](https://github.com/travisbrown/circe) JSON ast. 
-
+The generated schema can be serialised to JSON by calling the `asJson` method, which will return a [Circe](https://github.com/travisbrown/circe) JSON ast. 
 ### Algebric data types 
 
 ```tut:silent
@@ -55,17 +47,13 @@ object Contact {
   val schema = JsonSchema.deriveFor[Contact]
 }
 ```
-Arguably, a correct JSON schema encoding for ADTs would use the _oneOf_
-keyword (sum types). However, swagger encodes these data types using _allOf_, 
-which corresponds instead to union types.
-
+Arguably, a correct JSON schema encoding for ADTs would use the _oneOf_ keyword (sum types). However, swagger encodes these data types using _allOf_, which corresponds instead to union types.
 ```tut
 Contact.schema.asJson
 ```
 
 For ADTs, as well as for case classes, the `JsonSchema.relatedDefinitions`
-method can be used to access all the other definitions referenced in our type
-
+method can be used to access all the other definitions referenced in our type 
 ```tut
 Contact.schema.relatedDefinitions
 ```
@@ -125,8 +113,7 @@ RPS.schema.asJson
 
 ### Swagger DSL
 
-Docless provides a native scala implementation of the Swagger 2.0 specification together
-with a DSL which allows to easily manipulate and transform such model.
+Docless provides a native scala implementation of the Swagger 2.0 specification together with a DSL which allows to easily manipulate and transform such model.
 
 ```tut:invisible
 case class Error(code: Int, message: Option[String])
@@ -165,17 +152,11 @@ object PetsRoute extends PathGroup {
  
 }
 ```
-This not only provides better means for abstraction that JSON or YAML
-(i.e. variable binding, high order functions, implicit conversions, etc.), but 
-allows to integrate API documentation more tightly to 
-the application code.
+This not only provides better means for abstraction that JSON or YAML (i.e. variable binding, high order functions, implicit conversions, etc.), but allows to integrate API documentation more tightly to the application code.
 
 ### Aggregating documentation from multiple modules
 
-Aside for using Circe for JSON serialisation, Docless is not coupled to any specific
-Scala application framework. Nevertheless, it does provide a generic facility to enrich
-separate code modules with Swagger metadata (i.e. routes, controllers, or whatever else
-your framework calls them).
+Aside for using Circe for JSON serialisation, Docless is not coupled to any specific Scala application framework. Nevertheless, it does provide a generic facility to enrich separate code modules with Swagger metadata (i.e. routes, controllers, or whatever else your framework calls them).
 
 ```tut:invisible
 import com.timeout.docless.swagger._
@@ -205,19 +186,13 @@ object DinosRoute extends PathGroup {
     )
 }
 ```
-The `PathGroup` trait allows any Scala class or object to publish a list of endpoint
-paths and schema definitions. The `aggregate` method in the `PathGroup` companion 
-object can then be used to merge the supplied groups into a single Swagger file.
+The `PathGroup` trait allows any Scala class or object to publish a list of endpoint paths and schema definitions. The `aggregate` method in the `PathGroup` companion object can then be used to merge the supplied groups into a single Swagger file.
 
 ```tut
 PathGroup.aggregate(apiInfo, List(PetsRoute, DinosRoute))
 ```
 
-The `aggregate` method will also verify that the schema definitions referenced either 
-in endpoint responses or in body parameters can be resolved. In the example above,
-the method returns a non-empty list with a single `ResponseRef` error, pointing 
-to the missing `Dino` definition. On correct inputs, the method will return instead
-the resulting `APISchema` wrapped into a `cats.data.Validated.Valid`.
+The `aggregate` method will also verify that the schema definitions referenced either in endpoint responses or in body parameters can be resolved. In the example above, the method returns a non-empty list with a single `ResponseRef` error, pointing to the missing `Dino` definition. On correct inputs, the method will return instead the resulting `APISchema` wrapped into a `cats.data.Validated.Valid`.
 
 ## Todo
 

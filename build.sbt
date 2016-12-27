@@ -1,18 +1,25 @@
+import scala.util.Try
+
 organization := "com.timeout"
 
 name := "docless"
 
-version := "1.0_SNAPSHOT"
+version := "0.1.1"
+
+resolvers += Resolver.bintrayRepo("afiore", "maven")
+
+bintrayOrganization := Some("topublic")
 
 val circeVersion      = "0.6.1"
 val enumeratumVersion = "1.5.1"
 val catsVersion       = "0.8.1"
 
 val readme = "README.md"
+val readmePath = file(".") / readme
 
 scalaVersion := "2.11.8"
 
-licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
+licenses in ThisBuild += ("MIT", url("http://opensource.org/licenses/MIT"))
 
 libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-reflect"         % scalaVersion.value,
@@ -38,10 +45,10 @@ initialCommands in (Test, console) +=
     |ammonite.Main().run()
   """.stripMargin
 
-val genReadme =
-  taskKey[Unit](s"Copy readme file to project root")
+val copyReadme =
+  taskKey[File](s"Copy readme file to project root")
 
-genReadme := {
+copyReadme := {
   val _ = (tut in Compile).value
   val tutDir = tutTargetDirectory.value
   val log = streams.value.log
@@ -50,8 +57,25 @@ genReadme := {
 
   IO.copyFile(
     tutDir / readme,
-    file(".") / readme
+    readmePath
   )
+  readmePath
+}
+
+val pandocReadme =
+  taskKey[Unit](s"Add a table of content to the README using pandoc")
+
+pandocReadme := {
+  val readme = copyReadme.value
+  val log = streams.value.log
+  val cmd = s"pandoc -B doc/header.md -f markdown_github --toc -s -S $readme -o $readme"
+  log.info(s"Running pandoc: $cmd}")
+  try { Process(cmd) ! log }
+  catch { case e: java.io.IOException =>
+    log.error("You might need to install the pandoc executable! Please follow instructions here: http://pandoc.org/installing.html")
+    throw e
+  }
+
 }
 
 tutSettings

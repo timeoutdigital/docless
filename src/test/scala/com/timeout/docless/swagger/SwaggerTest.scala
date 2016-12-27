@@ -18,19 +18,16 @@ class SwaggerTest extends FreeSpec {
     val printer        = Printer.spaces2.copy(dropNullKeys = true)
     val jsonS          = printer.pretty(petstoreSchema.asJson)
     val report         = schema.validate(JsonLoader.fromString(jsonS))
+    val err            = System.err
 
     if (!report.isSuccess) {
-      println(jsonS)
-      println(
+      err.println(jsonS)
+      err.println(
         "============== Validation errors ================================"
       )
       val errors = report.asScala.toList
-      errors.foreach(println)
+      errors.foreach(err.println)
       fail()
-    } else {
-      val pw = new PrintWriter(new File("dist/petstore.json"))
-      pw.write(jsonS)
-      pw.close()
     }
   }
 }

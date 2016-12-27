@@ -1,29 +1,52 @@
 # Docless
 
-A scala DSL to generate JSON schema and [swagger](http://swagger.io) documentation for web services.
+[![Build Status](https://travis-ci.org/timeoutdigital/docless.svg?branch=master)](https://travis-ci.org/timeoutdigital/docless)
 
-## Rationale: why this and not Swagger-core?
+A scala DSL to generate JSON schema and [swagger](http://swagger.io) documentation for your web services.
 
-While being to some extent usable within Scala projects, [swagger-core](https://github.com/swagger-api/swagger-core) 
-has some serious limitations:
+-   [Why not just using Swagger-core?](#why-not-just-using-swagger-core)
+    -   [JSON schema derivation](#json-schema-derivation)
+    -   [Algebric data types](#algebric-data-types)
+    -   [Swagger DSL](#swagger-dsl)
+    -   [Aggregating documentation from multiple
+        modules](#aggregating-documentation-from-multiple-modules)
+-   [Todo](#todo)
 
-- The library heavily relies on Java runtime reflection to generate
-schemas for your data models. This might work just fine for plain
-Java objects, but it does not really play well with case classes and 
-sealed trait hierarchies, which are key to writing idiomatic Scala.
+Why not just using Swagger-core?
+--------------------------------
 
-- As Swagger is built on top of JAX-RS annotations, it provides way more limited 
-means of abstraction and code reuse than a DSL directly embedded into Scala.
+While being to some extend usable for Scala projects,
+[swagger-core](https://github.com/swagger-api/swagger-core) suffers from
+some serious limitations:
 
-## Feature overview
+-   It heavily relies on Java runtime reflection to generate Json
+    schemas for your data models. This might be fine for plain Java
+    objects, but it does not really play well with case classes and
+    sealed trait hierarchies, which are key Scala idioms.
+
+-   Swagger is built on top of JAX-RS annotations. These provide way
+    more limited means of abstraction and code reuse than a DSL directly
+    embedded into Scala.
+
+    Installation
+    ------------
+
+Add the following to your `build.sbt`
+
+``` {.scala}
+resolvers += Resolver.bintrayRepo("topublic", "maven")
+
+libraryDependencies + "com.timeout" %% "docless" % "0.1.0"
+```
 
 ### JSON schema derivation
 
-This project uses Shapeless to automatically derive JSON schemas for case classes
-and ADTs at compile time. By scraping unnecessary boilerplate code, this approach 
-helps keeping documentation in sync with the relevant business entities.
+This project uses Shapeless to automatically derive JSON schemas for
+case classes and ADTs at compile time. By scraping unnecessary
+boilerplate code, this approach helps keeping documentation in sync with
+the relevant business entities.
 
-```scala
+``` {.scala}
 import com.timeout.docless.schema._
 
 case class Pet(id: Int, name: String, tag: Option[String])
@@ -33,10 +56,10 @@ val petSchema = JsonSchema.deriveFor[Pet]
 
 #### Case classes
 
-Given a case class, generating a JSON schema is as easy as calling the `deriveFor`
-method supplying `Pet` as the type parameter.
+Given a case class, generating a JSON schema is as easy as calling the
+`deriveFor` method supplying `Pet` as the type parameter.
 
-```scala
+``` {.scala}
 scala> petSchema.asJson
 res2: io.circe.Json =
 {
@@ -60,12 +83,13 @@ res2: io.circe.Json =
 }
 ```
 
-The generated schema can be serialised to JSON by calling the `asJson` method, 
-which will return a [Circe](https://github.com/travisbrown/circe) JSON ast. 
+The generated schema can be serialised to JSON by calling the `asJson`
+method, which will return a
+[Circe](https://github.com/travisbrown/circe) JSON ast.
 
-### Algebric data types 
+### Algebric data types
 
-```scala
+``` {.scala}
 sealed trait Contact
 case class EmailAndPhoneNum(email: String, phoneNum: String) extends Contact
 case class EmailOnly(email: String) extends Contact
@@ -75,11 +99,12 @@ object Contact {
   val schema = JsonSchema.deriveFor[Contact]
 }
 ```
-Arguably, a correct JSON schema encoding for ADTs would use the _oneOf_
-keyword (sum types). However, swagger encodes these data types using _allOf_, 
-which corresponds instead to union types.
 
-```scala
+Arguably, a correct JSON schema encoding for ADTs would use the *oneOf*
+keyword (sum types). However, swagger encodes these data types using
+*allOf*, which corresponds instead to union types.
+
+``` {.scala}
 scala> Contact.schema.asJson
 res4: io.circe.Json =
 {
@@ -98,10 +123,12 @@ res4: io.circe.Json =
 }
 ```
 
-For ADTs, as well as for case classes, the `JsonSchema.relatedDefinitions`
-method can be used to access all the other definitions referenced in our type
+For ADTs, as well as for case classes, the
+`JsonSchema.relatedDefinitions`\
+method can be used to access all the other definitions referenced in our
+type
 
-```scala
+``` {.scala}
 scala> Contact.schema.relatedDefinitions
 res5: Set[com.timeout.docless.schema.JsonSchema.Definition] =
 Set(Definition(PhoneOnly,{
@@ -143,10 +170,11 @@ Set(Definition(PhoneOnly,{
 
 #### Enums support
 
-Docless supports encoding plain Scala enumerations as JSON schema enums through the
+Docless supports encoding plain Scala enumerations as JSON schema enums
+through the\
 `JsonSchema.enum` method:
 
-```scala
+``` {.scala}
  sealed trait Diet {
   def id: String
 }
@@ -167,7 +195,8 @@ object Diet {
   implicit val schema = JsonSchema.enum(Diet.values)
 }
 ```
-```scala
+
+``` {.scala}
 scala> Diet.schema.asJson
 res7: io.circe.Json =
 {
@@ -179,10 +208,11 @@ res7: io.circe.Json =
 }
 ```
 
-Alternatively, types that extend [enumeratum](https://github.com/lloydmeta/enumeratum)
+Alternatively, types that extend
+[enumeratum](https://github.com/lloydmeta/enumeratum)\
 `EnumEntry` are also supported through the `EnumSchema` trait:
 
-```scala
+``` {.scala}
 
 import enumeratum._
 import com.timeout.docless.schema.Auto.EnumSchema
@@ -197,8 +227,11 @@ object RPS extends Enum[RPS] with EnumSchema[RPS] {
   override def values = findValues
 }
 ```
-This trait will define on the companion object an implicit `JsonSchema[RPS]` instance:
-```scala
+
+This trait will define on the companion object an implicit
+`JsonSchema[RPS]` instance:
+
+``` {.scala}
 scala> RPS.schema.asJson
 res11: io.circe.Json =
 {
@@ -212,13 +245,11 @@ res11: io.circe.Json =
 
 ### Swagger DSL
 
-Docless provides a native scala implementation of the Swagger 2.0 specification together
-with a DSL which allows to easily manipulate and transform such model.
+Docless provides a native scala implementation of the Swagger 2.0
+specification together with a DSL which allows to easily manipulate and
+transform such model.
 
-
-
-
-```scala
+``` {.scala}
 import com.timeout.docless.swagger._
 import com.timeout.docless.schema._
 
@@ -249,21 +280,20 @@ object PetsRoute extends PathGroup {
  
 }
 ```
+
 This not only provides better means for abstraction that JSON or YAML
-(i.e. variable binding, high order functions, implicit conversions, etc.), but 
-also opens up the possibly to integrate Swagger documentation more tightly to 
-our application code.
+(i.e. variable binding, high order functions, implicit conversions,
+etc.), but allows to integrate API documentation more tightly to the
+application code.
 
 ### Aggregating documentation from multiple modules
 
-Aside for using Circe for JSON serialisation, Docless is not coupled to any specific
-Scala application framework. Nevertheless, it does provide a generic facility to enrich
-separate code modules with Swagger metadata (i.e. routes, controllers, or whatever else
-your framework calls them).
+Aside for using Circe for JSON serialisation, Docless is not coupled to
+any specific Scala application framework. Nevertheless, it does provide
+a generic facility to enrich separate code modules with Swagger metadata
+(i.e. routes, controllers, or whatever else your framework calls them).
 
-
-
-```scala
+``` {.scala}
 object DinosRoute extends PathGroup {
 
   val dinoSchema = JsonSchema.deriveFor[Dino]
@@ -283,22 +313,27 @@ object DinosRoute extends PathGroup {
     )
 }
 ```
-The `PathGroup` trait allows any Scala class or object to publish a list of endpoint
-paths and schema definitions. The `aggregate` method in the `PathGroup` companion 
-object can then be used to merge the supplied groups into a single Swagger file.
 
-```scala
+The `PathGroup` trait allows any Scala class or object to publish a list
+of endpoint paths and schema definitions. The `aggregate` method in the
+`PathGroup` companion object can then be used to merge the supplied
+groups into a single Swagger file.
+
+``` {.scala}
 scala> PathGroup.aggregate(apiInfo, List(PetsRoute, DinosRoute))
 res13: cats.data.ValidatedNel[com.timeout.docless.swagger.SchemaError,com.timeout.docless.swagger.APISchema] = Invalid(NonEmptyList(MissingDefinition(ResponseRef(TypeRef(Dino),/dinos/{id},Get))))
 ```
 
-The `aggregate` method will also verify that the schema definitions referenced either 
-in endpoint responses or in body parameters can be resolved. In the example above,
-the method returns a non-empty list with a single `ResponseRef` error, pointing 
-to the missing `Dino` definition. On correct inputs, the method will return instead
-the resulting `APISchema` wrapped into a `cats.data.Validated.Valid`.
+The `aggregate` method will also verify that the schema definitions
+referenced either in endpoint responses or in body parameters can be
+resolved. In the example above, the method returns a non-empty list with
+a single `ResponseRef` error, pointing to the missing `Dino` definition.
+On correct inputs, the method will return instead the resulting
+`APISchema` wrapped into a `cats.data.Validated.Valid`.
 
-## Todo
+Todo
+----
 
-- Review ADT support and possibly implement 'discriminator' fields as per Swagger 2.0 spec.
-- Handle recursive types (e.g. linked lists, trees)
+-   Review ADT support and possibly implement ‘discriminator’ fields as
+    per Swagger 2.0 spec.
+-   Handle recursive types (e.g. linked lists, trees)
