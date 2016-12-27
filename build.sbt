@@ -24,8 +24,19 @@ libraryDependencies ++= Seq(
   "io.circe"       %% "circe-parser"         % circeVersion,
   "io.circe"       %% "circe-generic"        % circeVersion,
   "org.scalatest"  %% "scalatest"            % "3.0.0" % "test",
-  "com.github.fge" % "json-schema-validator" % "2.2.6" % "test"
+  "com.github.fge" % "json-schema-validator" % "2.2.6" % "test",
+  "com.lihaoyi" % "ammonite" % "0.8.1" % "test" cross CrossVersion.full
 )
+
+initialCommands in (Test, console) +=
+  """
+    |import com.timeout.docless.schema._
+    |import com.timeout.docless.swagger._
+    |import cats._
+    |import cats.syntax.all._
+    |import cats.instances.all._
+    |ammonite.Main().run()
+  """.stripMargin
 
 val genReadme =
   taskKey[Unit](s"Copy readme file to project root")
