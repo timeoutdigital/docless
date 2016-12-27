@@ -7,5 +7,6 @@ jdk:
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y pandoc
-after_script:
-  sbt pandocReadme
+script:
+  sbt ++$TRAVIS_SCALA_VERSION test
+  sbt ++$TRAVIS_SCALA_VERSION pandocReadme
