@@ -10,8 +10,7 @@ import scala.util.matching.Regex
 import enumeratum.{Enum, EnumEntry}
 
 @implicitNotFound(
-  msg =
-    "Cannot derive a JsonSchema for ${A}. Please verify that instances can be derived for all its fields"
+  "Cannot derive a JsonSchema for ${A}. Please verify that instances can be derived for all its fields"
 )
 trait JsonSchema[A] extends JsonSchema.HasRef {
   def id: String
@@ -44,7 +43,7 @@ trait JsonSchema[A] extends JsonSchema.HasRef {
     Response(description, schema = Some(asArrayRef))
 }
 
-object JsonSchema extends Primitives with Auto {
+object JsonSchema extends Primitives with derive.HListInstances with derive.CoprodInstances {
   trait HasRef {
     def id: String
     def asRef: Ref      = TypeRef(id)
