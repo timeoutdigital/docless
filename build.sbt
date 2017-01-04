@@ -1,14 +1,8 @@
-import scala.util.Try
-
 organization := "com.timeout"
 
 name := "docless"
 
 version := "0.2.0"
-
-resolvers += Resolver.bintrayRepo("afiore", "maven")
-
-bintrayOrganization := Some("topublic")
 
 val circeVersion      = "0.6.1"
 val enumeratumVersion = "1.5.1"
@@ -19,7 +13,7 @@ val readmePath = file(".") / readme
 
 scalaVersion := "2.11.8"
 
-licenses in ThisBuild += ("MIT", url("http://opensource.org/licenses/MIT"))
+useGpg := true
 
 libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-reflect"         % scalaVersion.value,

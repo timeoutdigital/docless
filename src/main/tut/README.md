@@ -11,9 +11,8 @@ While being to some extent usable for Scala projects, [swagger-core](https://git
 Add the following to your `build.sbt`
 
 ```scala
-resolvers += Resolver.bintrayRepo("topublic", "maven")
 
-libraryDependencies + "com.timeout" %% "docless" % "0.2.0"
+libraryDependencies + "com.timeout" %% "docless" % doclessVersion
 ```
 ### JSON schema derivation
 
