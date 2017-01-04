@@ -95,7 +95,7 @@ Types that extend [enumeratum](https://github.com/lloydmeta/enumeratum) `EnumEnt
 ```tut:silent
 
 import enumeratum._
-import com.timeout.docless.schema.Auto.EnumSchema
+import com.timeout.docless.schema.EnumSchema
 
 sealed trait RPS extends EnumEntry with EnumEntry.Snakecase 
 

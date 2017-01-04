@@ -69,15 +69,17 @@ trait Primitives {
       ).asJsonObject
     )
 
-  implicit def listSchema[A: JsonSchema]: JsonSchema[List[A]] =
+  implicit def listSchema[A: JsonSchema]: JsonSchema[List[A]] = {
+    val schema = implicitly[JsonSchema[A]]
     inlineInstance[List[A]](
       JsonObject.fromMap(
         Map(
-          "type"  -> Json.fromString("array"),
-          "items" -> implicitly[JsonSchema[A]].asJson
+          "type" -> Json.fromString("array"),
+          "items" -> (if (schema.inline) schema.asJson else schema.asJsonRef)
         )
       )
     )
+  }
 
   implicit def optSchema[A: JsonSchema]: JsonSchema[Option[A]] =
     inlineInstance[Option[A]](implicitly[JsonSchema[A]].jsonObject)

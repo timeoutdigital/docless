@@ -1,6 +1,5 @@
 package com.timeout.docless.schema
 
-import com.timeout.docless.schema.Auto.EnumSchema
 import enumeratum._
 import io.circe._
 import org.scalatest.FreeSpec

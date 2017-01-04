@@ -180,7 +180,7 @@ Types that extend [enumeratum](https://github.com/lloydmeta/enumeratum)
 ``` {.scala}
 
 import enumeratum._
-import com.timeout.docless.schema.Auto.EnumSchema
+import com.timeout.docless.schema.EnumSchema
 
 sealed trait RPS extends EnumEntry with EnumEntry.Snakecase 
 
