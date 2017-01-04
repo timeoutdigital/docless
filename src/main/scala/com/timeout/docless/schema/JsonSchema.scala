@@ -76,6 +76,9 @@ object JsonSchema extends Primitives with derive.HListInstances with derive.Copr
     def fromRegex[K](r: Regex): PatternProperty[K] =
       new PatternProperty[K] { override val regex = r }
 
+    implicit def intPatternProp: PatternProperty[Int] =
+      fromRegex[Int]("[0-9]*".r)
+
     implicit def wildcard[K]: PatternProperty[K] =
       fromRegex[K](".*".r)
   }
