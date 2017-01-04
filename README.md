@@ -37,7 +37,7 @@ Add the following to your `build.sbt`
 ``` {.scala}
 resolvers += Resolver.bintrayRepo("topublic", "maven")
 
-libraryDependencies + "com.timeout" %% "docless" % "0.1.0"
+libraryDependencies + "com.timeout" %% "docless" % "0.2.0"
 ```
 
 ### JSON schema derivation
