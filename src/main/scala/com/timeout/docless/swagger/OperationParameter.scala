@@ -33,7 +33,7 @@ case class BodyParameter(description: Option[String] = None,
                          name: String = "body",
                          override val schema: Option[JsonSchema.Ref] = None)
     extends OperationParameter {
-  override def mandatory = copy(required = true)
+  override def mandatory                = copy(required = true)
   override def setType[T <: Type](t: T) = this
 }
 
@@ -61,7 +61,7 @@ case class Parameter(name: String,
     extends OperationParameter {
 
   def setType[T <: Type](t: T) = copy(`type` = t)
-  override def mandatory  = copy(required = true)
+  override def mandatory       = copy(required = true)
 }
 
 object Parameter {

@@ -46,13 +46,13 @@ object Required {
     implicit val genericCNil: Fields[CNil] = instance(Nil)
 
     implicit def genericCoproduct[H, T <: Coproduct](
-      implicit hFields: Lazy[Fields[H]],
-      tFields: Fields[T]
+        implicit hFields: Lazy[Fields[H]],
+        tFields: Fields[T]
     ): Fields[H :+: T] = instance((hFields.value.get ++ tFields.get).distinct)
 
     implicit def genericOutIsCooprod[A, R <: Coproduct](
-      implicit gen: Generic.Aux[A, R],
-      fields: Fields[R]
+        implicit gen: Generic.Aux[A, R],
+        fields: Fields[R]
     ): Fields[A] = instance(fields.get)
 
     implicit def genericFields[A, R](implicit gen: LabelledGeneric.Aux[A, R],

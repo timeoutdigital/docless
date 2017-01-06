@@ -8,7 +8,7 @@ val circeVersion      = "0.6.1"
 val enumeratumVersion = "1.5.1"
 val catsVersion       = "0.8.1"
 
-val readme = "README.md"
+val readme     = "README.md"
 val readmePath = file(".") / readme
 
 scalaVersion := "2.11.8"
@@ -26,28 +26,31 @@ libraryDependencies ++= Seq(
   "io.circe"       %% "circe-generic"        % circeVersion,
   "org.scalatest"  %% "scalatest"            % "3.0.0" % "test",
   "com.github.fge" % "json-schema-validator" % "2.2.6" % "test",
-  "com.lihaoyi" % "ammonite" % "0.8.1" % "test" cross CrossVersion.full
+  "com.lihaoyi"    % "ammonite"              % "0.8.1" % "test" cross CrossVersion.full
+)
+
+val predef = Seq(
+  "import com.timeout.docless.schema._",
+  "import com.timeout.docless.swagger._",
+  "import cats._",
+  "import cats.syntax.all._",
+  "import cats.instances.all._"
 )
 
 initialCommands in (Test, console) +=
-  """
-    |import com.timeout.docless.schema._
-    |import com.timeout.docless.swagger._
-    |import cats._
-    |import cats.syntax.all._
-    |import cats.instances.all._
-    |ammonite.Main().run()
+  s"""
+    |ammonite.Main(predef="${predef.mkString(";")}").run()
   """.stripMargin
 
 val copyReadme =
   taskKey[File](s"Copy readme file to project root")
 
 copyReadme := {
-  val _ = (tut in Compile).value
+  val _      = (tut in Compile).value
   val tutDir = tutTargetDirectory.value
-  val log = streams.value.log
+  val log    = streams.value.log
 
-  log.info(s"Copying ${tutDir / readme} to ${file(".") / readme }")
+  log.info(s"Copying ${tutDir / readme} to ${file(".") / readme}")
 
   IO.copyFile(
     tutDir / readme,
@@ -61,13 +64,16 @@ val pandocReadme =
 
 pandocReadme := {
   val readme = copyReadme.value
-  val log = streams.value.log
-  val cmd = s"pandoc -B doc/header.md -f markdown_github --toc -s -S $readme -o $readme"
+  val log    = streams.value.log
+  val cmd =
+    s"pandoc -B doc/header.md -f markdown_github --toc -s -S $readme -o $readme"
   log.info(s"Running pandoc: $cmd}")
-  try { Process(cmd) ! log }
-  catch { case e: java.io.IOException =>
-    log.error("You might need to install the pandoc executable! Please follow instructions here: http://pandoc.org/installing.html")
-    throw e
+  try { Process(cmd) ! log } catch {
+    case e: java.io.IOException =>
+      log.error(
+        "You might need to install the pandoc executable! Please follow instructions here: http://pandoc.org/installing.html"
+      )
+      throw e
   }
 
 }

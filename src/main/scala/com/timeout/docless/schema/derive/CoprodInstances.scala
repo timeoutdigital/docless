@@ -16,7 +16,7 @@ trait CoprodInstances {
     instance { sys.error("Unreachable code JsonSchema[CNil]") }
 
   implicit def coproductSchema[H, T <: Coproduct, L <: Nat](
-    implicit lazyHSchema: Lazy[JsonSchema[H]],
+      implicit lazyHSchema: Lazy[JsonSchema[H]],
       tSchema: JsonSchema[T],
       tLength: coproduct.Length.Aux[T, L],
       ev: H <:!< EnumEntry
@@ -45,5 +45,5 @@ trait CoprodInstances {
       rSchema.jsonObject.+:(
         "type" -> "object".asJson
       ) -> rSchema.relatedDefinitions
-  }
+    }
 }

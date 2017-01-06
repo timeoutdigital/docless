@@ -32,7 +32,8 @@ object Type extends CirceEnum[Type] with Enum[Type] {
 
     implicit val int: Primitive[Int] = Primitive(Integer)
 
-    implicit def num[N: Numeric](implicit ev: N <:!< Int): Primitive[N] = Primitive[N](Number)
+    implicit def num[N: Numeric](implicit ev: N <:!< Int): Primitive[N] =
+      Primitive[N](Number)
 
     implicit def bool: Primitive[Boolean] = Primitive(Boolean)
 

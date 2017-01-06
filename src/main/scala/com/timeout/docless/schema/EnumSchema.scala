@@ -1,6 +1,6 @@
 package com.timeout.docless.schema
 
-import enumeratum.{EnumEntry, Enum}
+import enumeratum.{Enum, EnumEntry}
 import scala.reflect.runtime.{universe => ru}
 
 trait EnumSchema[A <: EnumEntry] { this: Enum[A] =>

@@ -25,14 +25,16 @@ object PetstoreSchema {
         name = "id",
         description = Some("The pet id"),
         format = Some(Format.Int32)
-      ).as[Int]
+      )
+      .as[Int]
 
     val limitParam = Parameter
       .query(
         name = "limit",
         description = Some("How many items to return at one time (max 100)"),
         format = Some(Format.Int32)
-      ).as[Int]
+      )
+      .as[Int]
 
     val petResp = Response(
       description = "pet response"
@@ -60,12 +62,14 @@ object PetstoreSchema {
               .responding(errorResponse)(
                 200 -> Response(
                   description = "A paged array of pets"
-                ).asArrayOf[Pet].withHeaders(
-                  "x-next" -> Header(
-                    `type` = Type.String,
-                    description = Some("A link to the next page of responses")
+                ).asArrayOf[Pet]
+                  .withHeaders(
+                    "x-next" -> Header(
+                      `type` = Type.String,
+                      description =
+                        Some("A link to the next page of responses")
+                    )
                   )
-                )
               )
           )
           .Post(
@@ -82,7 +86,7 @@ object PetstoreSchema {
               tags = List("pets"),
               summary = Some("info for a specific pet")
             ).withParams(petIdParam)
-            .responding(errorResponse)(200 -> petResp)
+              .responding(errorResponse)(200 -> petResp)
           )
           .Delete(
             Operation(

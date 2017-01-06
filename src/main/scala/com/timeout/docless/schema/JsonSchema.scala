@@ -43,7 +43,10 @@ trait JsonSchema[A] extends JsonSchema.HasRef {
     Response(description, schema = Some(asArrayRef))
 }
 
-object JsonSchema extends Primitives with derive.HListInstances with derive.CoprodInstances {
+object JsonSchema
+    extends Primitives
+    with derive.HListInstances
+    with derive.CoprodInstances {
   trait HasRef {
     def id: String
     def asRef: Ref      = TypeRef(id)
@@ -112,9 +115,11 @@ object JsonSchema extends Primitives with derive.HListInstances with derive.Copr
       override def jsonObject         = obj
     }
 
-  def enum[A](values: Seq[String]): JsonSchema[A] =
+  def enum[A: ru.WeakTypeTag](values: Seq[String]): JsonSchema[A] =
     inlineInstance(Map("enum" -> values.asJson).asJsonObject)
 
-  def enum[E <: EnumEntry](e: Enum[E]): JsonSchema[E] =
+  def enum[E <: EnumEntry](
+      e: Enum[E]
+  )(implicit ev: ru.WeakTypeTag[E]): JsonSchema[E] =
     enum[E](e.values.map(_.entryName))
 }

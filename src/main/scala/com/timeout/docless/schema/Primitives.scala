@@ -74,7 +74,7 @@ trait Primitives {
     inlineInstance[List[A]](
       JsonObject.fromMap(
         Map(
-          "type" -> Json.fromString("array"),
+          "type"  -> Json.fromString("array"),
           "items" -> (if (schema.inline) schema.asJson else schema.asJsonRef)
         )
       )
