@@ -6,8 +6,7 @@ import cats.syntax.eq._
 import cats.syntax.foldable._
 import cats.syntax.monoid._
 import cats.{Eq, Monoid}
-import com.timeout.docless.schema.JsonSchema.Definition
-import com.timeout.docless.swagger.Path.RefWithContext
+import com.timeout.docless.schema.JsonSchema.{Definition, TypeRef}
 
 trait PathGroup {
   def params: List[OperationParameter] = Nil
@@ -24,16 +23,26 @@ object PathGroup {
       info: Info,
       groups: List[PathGroup]
   ): ValidatedNel[SchemaError, APISchema] = {
-    val g = groups.combineAll
+    val g          = groups.combineAll
+    val allDefs    = g.definitions
+    val definedIds = allDefs.map(_.id).toSet
 
     def isDefined(ctx: RefWithContext): Boolean =
-      g.definitions.exists(_.id === ctx.ref.id)
+      allDefs.exists(_.id === ctx.ref.id)
+
+    val missingDefinitions =
+      allDefs.foldMap { d =>
+        d.relatedRefs.collect {
+          case r @ TypeRef(id) if !definedIds.exists(_ === id) =>
+            SchemaError.missingDefinition(RefWithContext.definition(r, d))
+        }
+      }
 
     val errors =
       g.paths
         .foldMap(_.refs.filterNot(isDefined))
         .map(SchemaError.missingDefinition)
-        .toList
+        .toList ++ missingDefinitions
 
     if (errors.nonEmpty)
       Validated.invalid[NonEmptyList[SchemaError], APISchema](

@@ -1,31 +1,16 @@
 package com.timeout.docless.swagger
 
-import com.timeout.docless.schema.JsonSchema.Ref
 import cats.syntax.foldable._
 import cats.instances.list._
 import cats.instances.map._
-import com.timeout.docless.swagger.Path._
-
-object Path {
-  sealed trait RefWithContext {
-    def path: String
-    def ref: Ref
-  }
-
-  case class ParamRef(ref: Ref, path: String, param: String)
-      extends RefWithContext
-
-  case class ResponseRef(ref: Ref, path: String, method: Method)
-      extends RefWithContext
-}
 
 case class Path(id: String,
                 parameters: List[OperationParameter] = Nil,
                 operations: Map[Method, Operation] = Map.empty)
     extends ParamSetters[Path] {
 
-  private def paramRef(p: OperationParameter): Option[ParamRef] =
-    p.schema.map(ParamRef(_, id, p.name))
+  private def paramRef(p: OperationParameter): Option[RefWithContext] =
+    p.schema.map(RefWithContext.param(_, id, p.name))
 
   def paramRefs: Set[RefWithContext] =
     parameters.flatMap(paramRef).toSet ++
@@ -35,7 +20,7 @@ case class Path(id: String,
     operations.flatMap {
       case (m, op) =>
         val resps = op.responses.default :: op.responses.byStatusCode.values.toList
-        resps.flatMap(_.schema.map(ResponseRef(_, id, m)))
+        resps.flatMap { _.schema.map(RefWithContext.response(_, m, id)) }
     }.toSet
 
   def refs: Set[RefWithContext] = responseRefs ++ paramRefs

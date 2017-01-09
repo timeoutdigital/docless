@@ -31,7 +31,7 @@ trait JsonSchema[A] extends JsonSchema.HasRef {
   def asJsonRef: Json = asObjectRef.asJson
 
   lazy val definition: JsonSchema.Definition =
-    JsonSchema.Definition(id, asJson)
+    JsonSchema.Definition(id, relatedDefinitions.map(_.asRef), asJson)
 
   def definitions: Set[JsonSchema.Definition] =
     relatedDefinitions + definition
@@ -53,7 +53,8 @@ object JsonSchema
     def asArrayRef: Ref = ArrayRef(id)
   }
 
-  case class Definition(id: String, json: Json) extends HasRef
+  case class Definition(id: String, relatedRefs: Set[Ref], json: Json)
+      extends HasRef
 
   sealed trait Ref {
     def id: String
