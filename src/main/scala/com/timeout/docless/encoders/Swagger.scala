@@ -75,14 +75,14 @@ object Swagger {
   }
 
   implicit val schemaRefEnc = Encoder.instance[JsonSchema.Ref] {
-    case ArrayRef(id) =>
+    case ArrayRef(id, _) =>
       Json.obj(
         "type" -> Json.fromString("array"),
         "items" -> Json.obj(
           "$ref" -> Json.fromString(s"#/definitions/$id")
         )
       )
-    case TypeRef(id) =>
+    case TypeRef(id, _) =>
       Json.obj("$ref" -> Json.fromString(s"#/definitions/$id"))
   }
 

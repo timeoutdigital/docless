@@ -111,7 +111,7 @@ class JsonSchemaTest extends FreeSpec {
           """.stripMargin) should ===(Right(schema.asJson))
 
       schema.id should ===(id[Nested])
-      schema.relatedDefinitions should ===(Set(fs.definition))
+      schema.relatedDefinitions should ===(Set(fs.namedDefinition("foo")))
     }
 
     "with types extending enumeratum.EnumEntry" - {
@@ -175,18 +175,18 @@ class JsonSchemaTest extends FreeSpec {
 
       "provides JSON definitions of the coproduct" in {
         implicit val fs: JsonSchema[Foo] = fooSchema
-        val schema                       = JsonSchema.deriveFor[ADT]
-        val ySchema                      = JsonSchema.deriveFor[A]
-        val zSchema                      = JsonSchema.deriveFor[B]
 
-        val z1Schema = JsonSchema.deriveFor[C]
+        val schema  = JsonSchema.deriveFor[ADT]
+        val aSchema = JsonSchema.deriveFor[A]
+        val bSchema = JsonSchema.deriveFor[B]
+        val cSchema = JsonSchema.deriveFor[C]
 
         schema.relatedDefinitions should ===(
           Set(
-            ySchema.definition,
-            zSchema.definition,
-            z1Schema.definition,
-            fooSchema.definition
+            aSchema.definition,
+            bSchema.definition,
+            cSchema.definition,
+            fooSchema.namedDefinition("foo")
           )
         )
       }

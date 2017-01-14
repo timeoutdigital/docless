@@ -1,7 +1,7 @@
 package com.timeout.docless.swagger
 
 import cats.Show
-import com.timeout.docless.swagger.Path.{ParamRef, RefWithContext, ResponseRef}
+import RefWithContext._
 
 sealed trait SchemaError
 
@@ -11,9 +11,12 @@ object SchemaError {
     MissingDefinition(ctx)
 
   implicit val mdShow: Show[SchemaError] = Show.show {
-    case MissingDefinition(ParamRef(r, path, param)) =>
+    case MissingDefinition(RefWithContext(r, DefinitionContext(d))) =>
+      val fieldName = r.fieldName.fold("")(fld => s"(in field name: $fld)")
+      s"${d.id}: cannot find a definition for '${r.id}' $fieldName"
+    case MissingDefinition(RefWithContext(r, ParamContext(param, path))) =>
       s"$path: cannot find definition '${r.id}' for parameter name '$param'"
-    case MissingDefinition(ResponseRef(r, path, method)) =>
+    case MissingDefinition(RefWithContext(r, ResponseContext(method, path))) =>
       s"$path: cannot find response definition '${r.id}' for method '${method.entryName}'"
   }
 }

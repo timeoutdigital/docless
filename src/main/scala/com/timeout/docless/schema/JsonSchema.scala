@@ -1,5 +1,6 @@
 package com.timeout.docless.schema
 
+import com.timeout.docless.schema.JsonSchema.NamedDefinition
 import com.timeout.docless.swagger.Responses.Response
 import io.circe._
 import io.circe.syntax._
@@ -19,6 +20,9 @@ trait JsonSchema[A] extends JsonSchema.HasRef {
 
   def relatedDefinitions: Set[JsonSchema.Definition]
 
+  def fieldDefinitions: Set[JsonSchema.NamedDefinition] =
+    relatedDefinitions.collect { case d: NamedDefinition => d }
+
   def jsonObject: JsonObject
 
   def asJson: Json = jsonObject.asJson
@@ -30,8 +34,16 @@ trait JsonSchema[A] extends JsonSchema.HasRef {
 
   def asJsonRef: Json = asObjectRef.asJson
 
-  lazy val definition: JsonSchema.Definition =
-    JsonSchema.Definition(id, asJson)
+  def namedDefinition(fieldName: String): NamedDefinition =
+    JsonSchema.NamedDefinition(
+      id,
+      fieldName,
+      relatedDefinitions.map(_.asRef),
+      asJson
+    )
+
+  lazy val definition: JsonSchema.UnnamedDefinition =
+    JsonSchema.UnnamedDefinition(id, relatedDefinitions.map(_.asRef), asJson)
 
   def definitions: Set[JsonSchema.Definition] =
     relatedDefinitions + definition
@@ -49,26 +61,43 @@ object JsonSchema
     with derive.CoprodInstances {
   trait HasRef {
     def id: String
-    def asRef: Ref      = TypeRef(id)
-    def asArrayRef: Ref = ArrayRef(id)
+    def asRef: Ref      = TypeRef(id, None)
+    def asArrayRef: Ref = ArrayRef(id, None)
   }
 
-  case class Definition(id: String, json: Json) extends HasRef
+  sealed trait Definition extends HasRef {
+    def id: String
+    def json: Json
+    def relatedRefs: Set[Ref]
+  }
+
+  case class UnnamedDefinition(id: String, relatedRefs: Set[Ref], json: Json)
+      extends Definition
+
+  case class NamedDefinition(id: String,
+                             fieldName: String,
+                             relatedRefs: Set[Ref],
+                             json: Json)
+      extends Definition {
+    override def asRef      = TypeRef(id, Some(fieldName))
+    override def asArrayRef = ArrayRef(id, Some(fieldName))
+  }
 
   sealed trait Ref {
     def id: String
+    def fieldName: Option[String]
   }
 
-  case class TypeRef(id: String) extends Ref
+  case class TypeRef(id: String, fieldName: Option[String]) extends Ref
   object TypeRef {
-    def apply(definition: Definition): TypeRef = TypeRef(definition.id)
-    def apply(schema: JsonSchema[_]): TypeRef  = TypeRef(schema.id)
+    def apply(definition: Definition): TypeRef = TypeRef(definition.id, None)
+    def apply(schema: JsonSchema[_]): TypeRef  = TypeRef(schema.id, None)
   }
 
-  case class ArrayRef(id: String) extends Ref
+  case class ArrayRef(id: String, fieldName: Option[String]) extends Ref
   object ArrayRef {
-    def apply(definition: Definition): ArrayRef = ArrayRef(definition.id)
-    def apply(schema: JsonSchema[_]): ArrayRef  = ArrayRef(schema.id)
+    def apply(definition: Definition): ArrayRef = ArrayRef(definition.id, None)
+    def apply(schema: JsonSchema[_]): ArrayRef  = ArrayRef(schema.id, None)
   }
 
   trait PatternProperty[K] {
