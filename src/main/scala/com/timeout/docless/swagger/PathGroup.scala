@@ -33,7 +33,7 @@ object PathGroup {
     val missingDefinitions =
       allDefs.foldMap { d =>
         d.relatedRefs.collect {
-          case r @ TypeRef(id) if !definedIds.exists(_ === id) =>
+          case r @ TypeRef(id, _) if !definedIds.exists(_ === id) =>
             SchemaError.missingDefinition(RefWithContext.definition(r, d))
         }
       }

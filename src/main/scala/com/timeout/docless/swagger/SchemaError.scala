@@ -12,7 +12,8 @@ object SchemaError {
 
   implicit val mdShow: Show[SchemaError] = Show.show {
     case MissingDefinition(RefWithContext(r, DefinitionContext(d))) =>
-      s"${d.id}: cannot find a field definition for: '${r.id}'"
+      val fieldName = r.fieldName.fold("")(fld => s"(in field name: $fld)")
+      s"${d.id}: cannot find a definition for '${r.id}' $fieldName"
     case MissingDefinition(RefWithContext(r, ParamContext(param, path))) =>
       s"$path: cannot find definition '${r.id}' for parameter name '$param'"
     case MissingDefinition(RefWithContext(r, ResponseContext(method, path))) =>

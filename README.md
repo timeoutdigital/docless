@@ -286,7 +286,7 @@ groups into a single Swagger API description.
 
 ``` {.scala}
 scala> PathGroup.aggregate(apiInfo, List(PetsRoute, DinosRoute))
-res13: cats.data.ValidatedNel[com.timeout.docless.swagger.SchemaError,com.timeout.docless.swagger.APISchema] = Invalid(NonEmptyList(MissingDefinition(RefWithContext(TypeRef(Dino),ResponseContext(Get,/dinos/{id})))))
+res13: cats.data.ValidatedNel[com.timeout.docless.swagger.SchemaError,com.timeout.docless.swagger.APISchema] = Invalid(NonEmptyList(MissingDefinition(RefWithContext(TypeRef(Dino,None),ResponseContext(Get,/dinos/{id})))))
 ```
 
 The `aggregate` method will also verify that the schema definitions

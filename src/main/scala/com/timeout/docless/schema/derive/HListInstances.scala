@@ -18,15 +18,17 @@ trait HListInstances {
       lazyHSchema: Lazy[JsonSchema[H]],
       lazyTSchema: Lazy[JsonSchema[T]]
   ): JsonSchema[FieldType[K, H] :: T] = instanceAndRelated {
-    val hSchema = lazyHSchema.value
-    val tSchema = lazyTSchema.value
+    val fieldName = witness.value.name
+    val hSchema   = lazyHSchema.value
+    val tSchema   = lazyTSchema.value
     val (hValue, related) =
       if (hSchema.inline)
         hSchema.asJson -> tSchema.relatedDefinitions
       else
-        hSchema.asJsonRef -> (tSchema.relatedDefinitions + hSchema.definition)
+        hSchema.asJsonRef -> (tSchema.relatedDefinitions + hSchema
+          .namedDefinition(fieldName))
 
-    val hField  = witness.value.name -> hValue
+    val hField  = fieldName -> hValue
     val tFields = tSchema.jsonObject.toList
 
     JsonObject.fromIterable(hField :: tFields) -> related
