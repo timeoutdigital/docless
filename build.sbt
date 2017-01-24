@@ -1,8 +1,9 @@
+
 organization := "com.timeout"
 
 name := "docless"
 
-version := "0.2.0"
+version := "0.3.0"
 
 val circeVersion      = "0.6.1"
 val enumeratumVersion = "1.5.1"
@@ -11,7 +12,9 @@ val catsVersion       = "0.8.1"
 val readme     = "README.md"
 val readmePath = file(".") / readme
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.12.1"
+
+crossScalaVersions := Seq("2.11.8", "2.12.1")
 
 useGpg := true
 
