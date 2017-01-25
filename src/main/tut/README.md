@@ -12,7 +12,7 @@ Add the following to your `build.sbt`
 
 ```scala
 
-libraryDependencies + "com.timeout" %% "docless" % doclessVersion
+libraryDependencies += "com.timeout" %% "docless" % doclessVersion
 ```
 ### JSON schema derivation
 
@@ -158,14 +158,11 @@ This not only provides better means of abstraction that JSON or YAML (i.e. bindi
 
 Aside for using Circe for JSON serialisation, Docless is not coupled to any specific Scala web framework. Nevertheless, it does provide a generic facility to enrich separate code modules with Swagger metadata, being these routes, controllers, or whatever else your framework calls them.
 
-```tut:invisible
+```tut:silent
 import com.timeout.docless.swagger._
 
-val apiInfo = Info("Example API")
-
 case class Dino(name: String, extinctedSinceYears: Long, diet: Diet)
-```
-```tut:silent
+
 object DinosRoute extends PathGroup {
 
   val dinoSchema = JsonSchema.deriveFor[Dino]
@@ -188,6 +185,7 @@ object DinosRoute extends PathGroup {
 The `PathGroup` trait allows any Scala class or object to publish a list of endpoint paths and schema definitions. The `aggregate` method in the `PathGroup` companion object can then be used to merge the supplied groups into a single Swagger API description.
 
 ```tut
+val apiInfo = Info("Example API")
 PathGroup.aggregate(apiInfo, List(PetsRoute, DinosRoute))
 ```
 

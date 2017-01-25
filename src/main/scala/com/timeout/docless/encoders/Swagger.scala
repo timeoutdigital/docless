@@ -42,6 +42,18 @@ object Swagger {
     Json.fromFields(common ++ other)
   }
 
+  implicit val schemaRefEnc = Encoder.instance[JsonSchema.Ref] {
+    case ArrayRef(id, _) =>
+      Json.obj(
+        "type" -> Json.fromString("array"),
+        "items" -> Json.obj(
+          "$ref" -> Json.fromString(s"#/definitions/$id")
+        )
+      )
+    case TypeRef(id, _) =>
+      Json.obj("$ref" -> Json.fromString(s"#/definitions/$id"))
+  }
+
   implicit val operationParameterEnc: Encoder[OperationParameter] =
     Encoder.instance[OperationParameter] { p =>
       val common = Map(
@@ -72,18 +84,6 @@ object Swagger {
 
   implicit val definitionsEnc = Encoder.instance[Definitions] { defs =>
     defs.get.map(d => d.id -> d.json).toMap.asJson
-  }
-
-  implicit val schemaRefEnc = Encoder.instance[JsonSchema.Ref] {
-    case ArrayRef(id, _) =>
-      Json.obj(
-        "type" -> Json.fromString("array"),
-        "items" -> Json.obj(
-          "$ref" -> Json.fromString(s"#/definitions/$id")
-        )
-      )
-    case TypeRef(id, _) =>
-      Json.obj("$ref" -> Json.fromString(s"#/definitions/$id"))
   }
 
   implicit val headerEnc   = deriveEncoder[Responses.Header]
