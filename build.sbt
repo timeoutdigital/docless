@@ -17,6 +17,7 @@ scalaVersion := "2.12.1"
 crossScalaVersions := Seq("2.11.8", "2.12.1")
 
 useGpg := true
+useGpgAgent := true
 
 libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-reflect"         % scalaVersion.value,

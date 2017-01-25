@@ -1,7 +1,7 @@
 # Docless
 
 [![Build Status](https://travis-ci.org/timeoutdigital/docless.svg?branch=master)](https://travis-ci.org/timeoutdigital/docless)
-[![Maven Central](https://img.shields.io/maven-central/v/com.timeout/docless_2.11.svg)](http://search.maven.org/#search|ga|1|com.timeout.docless)
+[![Maven Central](https://img.shields.io/maven-central/v/com.timeout/docless_2.12.svg)](http://search.maven.org/#search|ga|1|com.timeout.docless)
 
 A scala DSL to generate JSON schema and [swagger](http://swagger.io) documentation for your web services.
 
@@ -37,7 +37,7 @@ Add the following to your `build.sbt`
 
 ``` {.scala}
 
-libraryDependencies + "com.timeout" %% "docless" % doclessVersion
+libraryDependencies += "com.timeout" %% "docless" % doclessVersion
 ```
 
 ### JSON schema derivation
@@ -201,9 +201,9 @@ scala> RPS.schema.asJson
 res11: io.circe.Json =
 {
   "enum" : [
-    "Rock",
-    "Paper",
-    "Scissors"
+    "rock",
+    "paper",
+    "scissors"
   ]
 }
 ```
@@ -259,6 +259,10 @@ being these routes, controllers, or whatever else your framework calls
 them.
 
 ``` {.scala}
+import com.timeout.docless.swagger._
+
+case class Dino(name: String, extinctedSinceYears: Long, diet: Diet)
+
 object DinosRoute extends PathGroup {
 
   val dinoSchema = JsonSchema.deriveFor[Dino]
@@ -285,8 +289,11 @@ of endpoint paths and schema definitions. The `aggregate` method in the
 groups into a single Swagger API description.
 
 ``` {.scala}
+scala> val apiInfo = Info("Example API")
+apiInfo: com.timeout.docless.swagger.Info = Info(Example API,1.0,None,None,None,None)
+
 scala> PathGroup.aggregate(apiInfo, List(PetsRoute, DinosRoute))
-res13: cats.data.ValidatedNel[com.timeout.docless.swagger.SchemaError,com.timeout.docless.swagger.APISchema] = Invalid(NonEmptyList(MissingDefinition(RefWithContext(TypeRef(Dino,None),ResponseContext(Get,/dinos/{id})))))
+res15: cats.data.ValidatedNel[com.timeout.docless.swagger.SchemaError,com.timeout.docless.swagger.APISchema] = Invalid(NonEmptyList(MissingDefinition(RefWithContext(TypeRef(Dino,None),ResponseContext(Get,/dinos/{id})))))
 ```
 
 The `aggregate` method will also verify that the schema definitions
