@@ -5,9 +5,9 @@ name := "docless"
 
 version := "0.3.0"
 
-val circeVersion      = "0.6.1"
-val enumeratumVersion = "1.5.1"
-val catsVersion       = "0.8.1"
+val circeVersion      = "0.7.0"
+val enumeratumVersion = "1.5.7"
+val catsVersion       = "0.9.0"
 
 val readme     = "README.md"
 val readmePath = file(".") / readme
@@ -23,14 +23,14 @@ libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-reflect"         % scalaVersion.value,
   "com.chuusai"    %% "shapeless"            % "2.3.2",
   "com.beachape"   %% "enumeratum"           % enumeratumVersion,
-  "com.beachape"   %% "enumeratum-circe"     % enumeratumVersion,
+  "com.beachape"   %% "enumeratum-circe"     % "1.5.9",
   "org.typelevel"  %% "cats"                 % catsVersion,
   "io.circe"       %% "circe-core"           % circeVersion,
   "io.circe"       %% "circe-parser"         % circeVersion,
   "io.circe"       %% "circe-generic"        % circeVersion,
   "org.scalatest"  %% "scalatest"            % "3.0.0" % "test",
   "com.github.fge" % "json-schema-validator" % "2.2.6" % "test",
-  "com.lihaoyi"    % "ammonite"              % "0.8.1" % "test" cross CrossVersion.full
+  "com.lihaoyi"    %% "ammonite"             % "0.8.2" % "test" cross CrossVersion.full
 )
 
 val predef = Seq(
