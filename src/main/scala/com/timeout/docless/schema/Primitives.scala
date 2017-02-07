@@ -2,9 +2,10 @@ package com.timeout.docless.schema
 
 import java.time.{LocalDate, LocalDateTime}
 
-import com.timeout.docless.schema.JsonSchema.{inlineInstance, PatternProperty}
+import com.timeout.docless.schema.JsonSchema._
 import io.circe._
 import io.circe.syntax._
+import scala.reflect.runtime.{universe => ru}
 
 trait Primitives {
   implicit val boolSchema: JsonSchema[Boolean] =
@@ -81,8 +82,9 @@ trait Primitives {
     )
   }
 
-  implicit def optSchema[A: JsonSchema]: JsonSchema[Option[A]] =
-    inlineInstance[Option[A]](implicitly[JsonSchema[A]].jsonObject)
+  implicit def optSchema[A](implicit ev: JsonSchema[A], tag: ru.WeakTypeTag[A]): JsonSchema[Option[A]] =
+    if (ev.inline) inlineInstance[Option[A]](ev.jsonObject)
+    else functorInstance[Option, A](ev.jsonObject)(tag)
 
   implicit def mapSchema[K, V](implicit kPattern: PatternProperty[K],
                                vSchema: JsonSchema[V]): JsonSchema[Map[K, V]] =

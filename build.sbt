@@ -3,7 +3,7 @@ organization := "com.timeout"
 
 name := "docless"
 
-version := "0.3.0"
+version := "0.4.0"
 
 val circeVersion      = "0.6.1"
 val enumeratumVersion = "1.5.1"
