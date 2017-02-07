@@ -25,6 +25,7 @@ object JsonSchemaTest {
   }
 
   case class Nested(name: String, foo: Foo)
+  case class NestedOpt(name: String, fooOpt: Option[Foo])
 
   case class X(e: E, f: F)
 
@@ -111,7 +112,33 @@ class JsonSchemaTest extends FreeSpec {
           """.stripMargin) should ===(Right(schema.asJson))
 
       schema.id should ===(id[Nested])
-      schema.relatedDefinitions should ===(Set(fs.namedDefinition("foo")))
+      schema.relatedDefinitions should ===(Set(fs.NamedDefinition("foo")))
+    }
+
+    "handles nested case classes within options" in {
+      implicit val fs: JsonSchema[Foo] = fooSchema
+
+      val schema = JsonSchema.deriveFor[NestedOpt]
+      parser.parse(s"""
+                      |{
+                      |  "type": "object",
+                      |  "required" : [
+                      |    "name"
+                      |  ],
+                      |  "properties" : {
+                      |    "name" : {
+                      |      "type" : "string"
+                      |    },
+                      |    "fooOpt" : {
+                      |      "$ref" : "#/definitions/${id[Foo]}"
+                      |    }
+                      |  }
+                      |}
+                      |
+          """.stripMargin) should ===(Right(schema.asJson))
+
+      schema.id should ===(id[NestedOpt])
+      schema.relatedDefinitions should ===(Set(fs.NamedDefinition("fooOpt")))
     }
 
     "with types extending enumeratum.EnumEntry" - {
@@ -186,7 +213,7 @@ class JsonSchemaTest extends FreeSpec {
             aSchema.definition,
             bSchema.definition,
             cSchema.definition,
-            fooSchema.namedDefinition("foo")
+            fooSchema.NamedDefinition("foo")
           )
         )
       }

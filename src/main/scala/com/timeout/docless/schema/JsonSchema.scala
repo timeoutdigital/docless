@@ -34,7 +34,7 @@ trait JsonSchema[A] extends JsonSchema.HasRef {
 
   def asJsonRef: Json = asObjectRef.asJson
 
-  def namedDefinition(fieldName: String): NamedDefinition =
+  def NamedDefinition(fieldName: String): NamedDefinition =
     JsonSchema.NamedDefinition(
       id,
       fieldName,
@@ -119,6 +119,16 @@ object JsonSchema
       obj: => JsonObject
   )(implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] =
     new JsonSchema[A] {
+      override def id                 = tag.tpe.typeSymbol.fullName
+      override def inline             = false
+      override def jsonObject         = obj
+      override def relatedDefinitions = Set.empty
+    }
+
+   def functorInstance[F[_],A](
+      obj: => JsonObject
+  )(implicit tag: ru.WeakTypeTag[A]): JsonSchema[F[A]] =
+    new JsonSchema[F[A]] {
       override def id                 = tag.tpe.typeSymbol.fullName
       override def inline             = false
       override def jsonObject         = obj
