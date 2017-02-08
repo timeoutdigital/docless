@@ -1,9 +1,7 @@
 package com.timeout.docless.swagger
 
-import java.io._
 import com.github.fge.jackson.JsonLoader
 import com.github.fge.jsonschema.main.JsonSchemaFactory
-import com.timeout.docless.encoders.Swagger._
 import io.circe._
 import io.circe.syntax._
 import org.scalatest.FreeSpec
