@@ -3,11 +3,11 @@ organization := "com.timeout"
 
 name := "docless"
 
-version := "0.4.0"
+version := "0.5.0-SNAPSHOT"
 
-val circeVersion      = "0.6.1"
-val enumeratumVersion = "1.5.1"
-val catsVersion       = "0.8.1"
+val circeVersion      = "0.7.0"
+val enumeratumVersion = "1.5.7"
+val catsVersion       = "0.9.0"
 
 val readme     = "README.md"
 val readmePath = file(".") / readme

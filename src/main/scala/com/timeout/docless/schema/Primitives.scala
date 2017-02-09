@@ -86,6 +86,7 @@ trait Primitives {
     if (ev.inline) inlineInstance[Option[A]](ev.jsonObject)
     else functorInstance[Option, A](ev.jsonObject)(tag)
 
+
   implicit def mapSchema[K, V](implicit kPattern: PatternProperty[K],
                                vSchema: JsonSchema[V]): JsonSchema[Map[K, V]] =
     inlineInstance {
