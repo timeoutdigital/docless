@@ -21,11 +21,13 @@ object PathGroup {
 
   def aggregate(
       info: Info,
-      groups: List[PathGroup]
+      groups: List[PathGroup],
+      securitySchemes: List[SecurityScheme] = Nil
   ): ValidatedNel[SchemaError, APISchema] = {
     val g          = groups.combineAll
     val allDefs    = g.definitions
     val definedIds = allDefs.map(_.id).toSet
+    val securityDefinitions = SecurityDefinitions(securitySchemes: _*)
 
     def isDefined(ctx: RefWithContext): Boolean =
       allDefs.exists(_.id === ctx.ref.id)
@@ -58,7 +60,8 @@ object PathGroup {
           paths = Paths(g.paths),
           schemes = Set(Scheme.Http),
           consumes = Set("application/json"),
-          produces = Set("application/json")
+          produces = Set("application/json"),
+          securityDefinitions = securityDefinitions
         ).defining(g.definitions: _*)
       }
   }
