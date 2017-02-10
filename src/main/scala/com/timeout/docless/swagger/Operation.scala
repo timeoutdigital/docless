@@ -5,7 +5,7 @@ case class Operation(responses: Responses = Responses.default,
                      consumes: Set[String] = Set.empty,
                      produces: Set[String] = Set.empty,
                      schemes: Set[Scheme] = Set.empty,
-                     security: List[String] = Nil,
+                     security: List[SecurityRequirement] = Nil,
                      deprecated: Boolean = false,
                      operationId: Option[String] = None,
                      summary: Option[String] = None,
@@ -16,6 +16,9 @@ case class Operation(responses: Responses = Responses.default,
 
   override def withParams(ps: OperationParameter*): Operation =
     copy(parameters = ps.toList)
+
+  def withSecurity(ss: SecurityRequirement*): Operation =
+    copy(security = ss.toList)
 
   def withDescription(desc: String) = copy(description = Some(desc))
 

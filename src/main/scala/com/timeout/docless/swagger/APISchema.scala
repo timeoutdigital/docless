@@ -16,7 +16,8 @@ case class APISchema(
     schemes: Set[Scheme] = Set.empty,
     consumes: Set[String] = Set.empty,
     produces: Set[String] = Set.empty,
-    definitions: Definitions = Definitions.empty
+    definitions: Definitions = Definitions.empty,
+    securityDefinitions: SecurityDefinitions = SecurityDefinitions.empty
 ) extends ParamSetters[APISchema] {
 
   def withPaths(ps: Path*): APISchema =
@@ -107,13 +108,18 @@ object APISchema {
     defs.get.map(d => d.id -> d.json).toMap.asJson
   }
 
+  implicit val securityDefinitionsEnc = Encoder.instance[SecurityDefinitions] { defs =>
+    defs.get.map(d => d.name -> d.asJson).toMap.asJson
+  }
+
+  implicit val securityRequirementEncoder = Encoder.instance[SecurityRequirement] { s =>
+    Json.fromFields(Map(s.name -> s.scope.asJson))
+  }
+
   implicit val headerEnc   = deriveEncoder[Responses.Header]
   implicit val responseEnc = deriveEncoder[Responses.Response]
   implicit val responsesEnc = Encoder.instance[Responses] { rs =>
     rs.byStatusCode.map { case (code, resp) => code -> resp.asJson }.asJson
-  }
-  implicit val securityReqEnc = Encoder.instance[SecurityRequirement] { sr =>
-    Encoder[Map[String, List[String]]].apply(sr.bySchema)
   }
   implicit val opParamsEnc = Encoder.instance[OperationParameters] { params =>
     params.get.map(p => p.name -> p.asJson).toMap.asJson

@@ -5,6 +5,7 @@ import enumeratum._
 sealed trait SecurityScheme {
   def description: Option[String]
   def name: String
+  def requirement: SecurityRequirement = SecurityRequirement(this)
 }
 
 case class Basic(name: String, description: Option[String] = None)
@@ -21,7 +22,9 @@ case class OAuth2(name: String,
                   tokenUrl: Option[String] = None,
                   scopes: Map[String, String] = Map.empty,
                   description: Option[String] = None)
-    extends SecurityScheme
+    extends SecurityScheme {
+  def requirement(scopes: String*): SecurityRequirement = SecurityRequirement(this, scopes.toList)
+}
 
 object SecurityScheme {
 
