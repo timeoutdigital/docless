@@ -26,7 +26,7 @@ trait HListInstances {
         hSchema.asJson -> tSchema.relatedDefinitions
       else
         hSchema.asJsonRef -> (tSchema.relatedDefinitions + hSchema
-          .namedDefinition(fieldName))
+          .NamedDefinition(fieldName))
 
     val hField  = fieldName -> hValue
     val tFields = tSchema.jsonObject.toList
