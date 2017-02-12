@@ -81,7 +81,7 @@ class JsonSchemaTest extends FreeSpec {
       fooSchema.id should ===(id[Foo])
     }
 
-    "handles nested definitions" in {
+    "handles non primitive types" in {
       implicit val fs: JsonSchema[Foo] = fooSchema
 
       val schema = JsonSchema.deriveFor[Nested]

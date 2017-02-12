@@ -23,7 +23,7 @@ libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-reflect"         % scalaVersion.value,
   "com.chuusai"    %% "shapeless"            % "2.3.2",
   "com.beachape"   %% "enumeratum"           % enumeratumVersion,
-  "com.beachape"   %% "enumeratum-circe"     % enumeratumVersion,
+  "com.beachape"   %% "enumeratum-circe"     % "1.5.9",
   "org.typelevel"  %% "cats"                 % catsVersion,
   "io.circe"       %% "circe-core"           % circeVersion,
   "io.circe"       %% "circe-parser"         % circeVersion,
