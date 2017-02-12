@@ -2,7 +2,6 @@ package com.timeout.docless.schema
 
 import java.util.regex.Pattern
 
-import scala.reflect.runtime.{universe => ru}
 import enumeratum.EnumEntry
 import shapeless._
 import shapeless.labelled._
@@ -76,18 +75,12 @@ object PlainEnum {
     instance(format(witness.value.name) :: lazyEnum.value.ids)
 
   implicit def genericPlainEnum[A, R <: Coproduct](
-      implicit
-      gen: LabelledGeneric.Aux[A, R],
-      enum: PlainEnum[R],
-      format: IdFormat,
-      ev: A <:!< EnumEntry
+    implicit
+    gen: LabelledGeneric.Aux[A, R],
+    enum: PlainEnum[R],
+    format: IdFormat,
+    ev: A <:!< EnumEntry
   ): PlainEnum[A] = instance(enum.ids)
 
-  def deriveFor[A](implicit ev: PlainEnum[A]): PlainEnum[A] = ev
-
-  implicit def coproductEnumSchema[A](
-    implicit
-    ev: PlainEnum[A],
-    format: IdFormat,
-    tag: ru.WeakTypeTag[A]): JsonSchema[A] = JsonSchema.enum[A](ev.ids)
+  def apply[A](implicit ev: PlainEnum[A]): PlainEnum[A] = ev
 }

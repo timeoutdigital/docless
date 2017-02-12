@@ -12,7 +12,7 @@ A scala DSL to generate JSON schema and [swagger](http://swagger.io) documentati
     -   [Swagger DSL](#swagger-dsl)
     -   [Aggregating documentation from multiple
         modules](#aggregating-documentation-from-multiple-modules)
--   [Todo](#todo)
+-   [Known issues](#known-issues)
 
 Why not just using Swagger-core?
 --------------------------------
@@ -90,27 +90,32 @@ method, which will return a
 
 ### Algebraic data types
 
+Arguably, the idea of ADT or sum type is best expressed using JsonSchema
+*oneOf* keyword. However, as Swagger UI seems to only support the
+`allOf`,\
+this library uses the latter as default. This can be easily overriden by
+defining an implicit instance of `derive.Config` in the local scope:
+
 ``` {.scala}
+import com.timeout.docless.schema.derive.{Config, Combinator}
+
 sealed trait Contact
 case class EmailAndPhoneNum(email: String, phoneNum: String) extends Contact
 case class EmailOnly(email: String) extends Contact
 case class PhoneOnly(phoneNum: String) extends Contact
 
 object Contact {
+  implicit val conf: Config = Config(Combinator.OneOf)
   val schema = JsonSchema.deriveFor[Contact]
 }
 ```
 
-Arguably, a correct JSON schema encoding for ADTs would use the *oneOf*
-keyword. However, for historical reasons Swagger encodes these data
-types using *allOf*.
-
 ``` {.scala}
 scala> Contact.schema.asJson
-res4: io.circe.Json =
+res5: io.circe.Json =
 {
   "type" : "object",
-  "allOf" : [
+  "oneOf" : [
     {
       "$ref" : "#/definitions/EmailAndPhoneNum"
     },
@@ -126,45 +131,43 @@ res4: io.circe.Json =
 
 For ADTs, as well as for case classes, the
 `JsonSchema.relatedDefinitions`\
-method can be used to access the other definitions referenced in a
+method can be used to access the child definitions referenced in a
 schema:
 
 ``` {.scala}
 scala> Contact.schema.relatedDefinitions.map(_.id)
-res5: scala.collection.immutable.Set[String] = Set(PhoneOnly, EmailOnly, EmailAndPhoneNum)
+res6: scala.collection.immutable.Set[String] = Set(PhoneOnly, EmailOnly, EmailAndPhoneNum)
 ```
 
 #### Enums support
 
-Docless allows encoding any list of strings as JSON schema enums through
-the\
-`JsonSchema.enum` method:
+Docless can automatically derive a Json schema enum for sum types
+consisting of case objects only:
 
 ``` {.scala}
- sealed trait Diet {
-  def id: String
-}
+sealed trait Diet
 
-object Diet {
-  case object Herbivore extends Diet {
-    override val id = "herbivore"
-  }
-  case object Carnivore extends Diet {
-    override val id = "carnivore"
-  }
-  case object Omnivore extends Diet {
-    override val id = "omnivore"
-  }
-  
-  val values = Seq(Herbivore, Carnivore, Omnivore).map(_.id)
-  
-  implicit val schema = JsonSchema.enum(Diet.values)
-}
+case object Herbivore extends Diet
+case object Carnivore extends Diet
+case object Omnivore extends Diet
 ```
 
+Enumeration values can be automatically converted into a string
+identifier\
+using one of the pre-defined formats.
+
 ``` {.scala}
-scala> Diet.schema.asJson
-res7: io.circe.Json =
+scala> import com.timeout.docless.schema.PlainEnum.IdFormat
+import com.timeout.docless.schema.PlainEnum.IdFormat
+
+scala> implicit val format: IdFormat = IdFormat.SnakeCase
+format: com.timeout.docless.schema.PlainEnum.IdFormat = SnakeCase
+
+scala> val schema = JsonSchema.deriveEnum[Diet]
+schema: com.timeout.docless.schema.JsonSchema[Diet] = com.timeout.docless.schema.JsonSchema$$anon$4@58a7e8ec
+
+scala> schema.asJson
+res8: io.circe.Json =
 {
   "enum" : [
     "herbivore",
@@ -174,39 +177,13 @@ res7: io.circe.Json =
 }
 ```
 
-Types that extend [enumeratum](https://github.com/lloydmeta/enumeratum)
-`EnumEntry` are also supported through the `EnumSchema` trait:
-
-``` {.scala}
-
-import enumeratum._
-import com.timeout.docless.schema.EnumSchema
-
-sealed trait RPS extends EnumEntry with EnumEntry.Snakecase 
-
-object RPS extends Enum[RPS] with EnumSchema[RPS] {
-  case object Rock extends RPS
-  case object Paper extends RPS
-  case object Scissors extends RPS
-  
-  override def values = findValues
-}
-```
-
-This trait will define on the companion object an implicit instance of
-`JsonSchema[RPS]`:
-
-``` {.scala}
-scala> RPS.schema.asJson
-res11: io.circe.Json =
-{
-  "enum" : [
-    "rock",
-    "paper",
-    "scissors"
-  ]
-}
-```
+Additionally, the popular library
+[enumeratum](https://github.com/lloydmeta/enumeratum) is also supported
+through the
+[EnumSchema\`](https://github.com/timeoutdigital/docless/blob/master/src/main/scala/com/timeout/docless/schema/EnumSchema.scala)
+trait.\
+The trait can be simply mixed into the enum companion object and will
+automatically provide a Json Schema instance.
 
 ### Swagger DSL
 
@@ -293,7 +270,7 @@ scala> val apiInfo = Info("Example API")
 apiInfo: com.timeout.docless.swagger.Info = Info(Example API,1.0,None,None,None,None)
 
 scala> PathGroup.aggregate(apiInfo, List(PetsRoute, DinosRoute))
-res15: cats.data.ValidatedNel[com.timeout.docless.swagger.SchemaError,com.timeout.docless.swagger.APISchema] = Invalid(NonEmptyList(MissingDefinition(RefWithContext(TypeRef(Dino,None),ResponseContext(Get,/dinos/{id})))))
+res12: cats.data.ValidatedNel[com.timeout.docless.swagger.SchemaError,com.timeout.docless.swagger.APISchema] = Invalid(NonEmptyList(MissingDefinition(RefWithContext(TypeRef(Dino,None),ResponseContext(Get,/dinos/{id})))))
 ```
 
 The `aggregate` method will also verify that the schema definitions
@@ -303,9 +280,9 @@ a single `ResponseRef` error, pointing to the missing `Dino` definition.
 On correct inputs, the method will return instead the resulting
 `APISchema` wrapped into a `cats.data.Validated.Valid`.
 
-Todo
-----
+Known issues
+------------
 
--   Review ADT support and possibly implement ‘discriminator’ fields as
-    per Swagger 2.0 spec.
--   Handle recursive types (e.g. linked lists, trees)
+Currently Docless does not support recursive types (e.g. trees or linked
+lists). As a way around, one can always define them manually using the
+`JsonSchema.instance[A]` method.
