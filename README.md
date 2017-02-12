@@ -136,77 +136,53 @@ res5: scala.collection.immutable.Set[String] = Set(PhoneOnly, EmailOnly, EmailAn
 
 #### Enums support
 
-Docless allows encoding any list of strings as JSON schema enums through
-the\
-`JsonSchema.enum` method:
+Docless will automatically derive a Json schema enum for sum types\
+consisting of case objects only:
 
 ``` {.scala}
- sealed trait Diet {
-  def id: String
-}
-
+sealed trait Diet
 object Diet {
-  case object Herbivore extends Diet {
-    override val id = "herbivore"
-  }
-  case object Carnivore extends Diet {
-    override val id = "carnivore"
-  }
-  case object Omnivore extends Diet {
-    override val id = "omnivore"
-  }
-  
-  val values = Seq(Herbivore, Carnivore, Omnivore).map(_.id)
-  
-  implicit val schema = JsonSchema.enum(Diet.values)
+  case object Herbivore extends Diet
+  case object Carnivore extends Diet
+  case object Omnivore extends Diet
 }
 ```
 
+Enumeration values can be automatically converted into a string
+identifier\
+using one of the pre-defined formats.
+
 ``` {.scala}
-scala> Diet.schema.asJson
-res7: io.circe.Json =
+scala> import com.timeout.docless.schema.Enum.IdFormat
+import com.timeout.docless.schema.Enum.IdFormat
+
+scala> implicit val format: IdFormat = IdFormat.SnakeCase
+format: com.timeout.docless.schema.Enum.IdFormat = SnakeCase
+
+scala> val schema = JsonSchema.deriveFor[Diet]
+schema: com.timeout.docless.schema.JsonSchema[Diet] = com.timeout.docless.schema.JsonSchema$$anon$3@106bc447
+
+scala> schema.asJson
+res6: io.circe.Json =
 {
-  "enum" : [
-    "herbivore",
-    "carnivore",
-    "omnivore"
+  "type" : "object",
+  "allOf" : [
+    {
+      "$ref" : "#/definitions/Diet.Carnivore"
+    },
+    {
+      "$ref" : "#/definitions/Diet.Herbivore"
+    },
+    {
+      "$ref" : "#/definitions/Diet.Omnivore"
+    }
   ]
 }
 ```
 
-Types that extend [enumeratum](https://github.com/lloydmeta/enumeratum)
-`EnumEntry` are also supported through the `EnumSchema` trait:
-
-``` {.scala}
-
-import enumeratum._
-import com.timeout.docless.schema.EnumSchema
-
-sealed trait RPS extends EnumEntry with EnumEntry.Snakecase 
-
-object RPS extends Enum[RPS] with EnumSchema[RPS] {
-  case object Rock extends RPS
-  case object Paper extends RPS
-  case object Scissors extends RPS
-  
-  override def values = findValues
-}
-```
-
-This trait will define on the companion object an implicit instance of
-`JsonSchema[RPS]`:
-
-``` {.scala}
-scala> RPS.schema.asJson
-res11: io.circe.Json =
-{
-  "enum" : [
-    "rock",
-    "paper",
-    "scissors"
-  ]
-}
-```
+Additionally, the popular library
+[enumeratum](https://github.com/lloydmeta/enumeratum) is also supported
+through the `EnumSchema` trait.
 
 ### Swagger DSL
 
@@ -293,7 +269,7 @@ scala> val apiInfo = Info("Example API")
 apiInfo: com.timeout.docless.swagger.Info = Info(Example API,1.0,None,None,None,None)
 
 scala> PathGroup.aggregate(apiInfo, List(PetsRoute, DinosRoute))
-res15: cats.data.ValidatedNel[com.timeout.docless.swagger.SchemaError,com.timeout.docless.swagger.APISchema] = Invalid(NonEmptyList(MissingDefinition(RefWithContext(TypeRef(Dino,None),ResponseContext(Get,/dinos/{id})))))
+res10: cats.data.ValidatedNel[com.timeout.docless.swagger.SchemaError,com.timeout.docless.swagger.APISchema] = Invalid(NonEmptyList(MissingDefinition(RefWithContext(TypeRef(Dino,None),ResponseContext(Get,/dinos/{id})))))
 ```
 
 The `aggregate` method will also verify that the schema definitions

@@ -9,7 +9,6 @@ import scala.annotation.implicitNotFound
 import scala.reflect.runtime.{universe => ru}
 import scala.util.matching.Regex
 import enumeratum.{Enum, EnumEntry}
-import shapeless.{Coproduct, LabelledGeneric}
 
 @implicitNotFound(
   "Cannot derive a JsonSchema for ${A}. Please verify that instances can be derived for all its fields"
@@ -163,4 +162,10 @@ object JsonSchema
 
   def enum[E <: EnumEntry](e: Enum[E])(implicit ev: ru.WeakTypeTag[E])
     :JsonSchema[E] = enum[E](e.values.map(_.entryName))
+
+  implicit def coproductEnumSchema[A](
+    implicit
+    ev: PlainEnum[A],
+    format: PlainEnum.IdFormat,
+    tag: ru.WeakTypeTag[A]): JsonSchema[A] = JsonSchema.enum[A](ev.ids)
 }

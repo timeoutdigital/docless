@@ -37,7 +37,6 @@ object JsonSchemaTest {
 
   sealed trait F extends EnumEntry
   object F extends Enum[F] with EnumSchema[F] {
-
     override val values = findValues
     case object F1 extends F
     case object F2 extends F
@@ -174,7 +173,13 @@ class JsonSchemaTest extends FreeSpec {
     "with sealed traits of case objects" - {
       "generates an enumerable" in {
         val schema = JsonSchema.deriveFor[TheEnum]
+
         schema.id should ===(id[TheEnum])
+        parser.parse("""
+          |{
+          |  "enum" : ["Enum1", "Enum2"]
+          |}
+        """.stripMargin) should ===(Right(schema.asJson))
       }
     }
 

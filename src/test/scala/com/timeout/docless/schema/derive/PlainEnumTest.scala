@@ -13,7 +13,7 @@ class PlainEnumTest extends FreeSpec with Matchers {
   case class X(a: Int) extends TheADT
   case class Y(a: Int) extends TheADT
 
-  "PlainEnum" - {
+  "Enum" - {
     "handles sealed traits of case objects only" in {
       val enum = PlainEnum.deriveFor[TheEnum]
       enum.ids should ===(List("EnumA", "EnumB"))
