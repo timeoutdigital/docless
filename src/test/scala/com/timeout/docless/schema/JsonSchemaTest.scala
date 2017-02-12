@@ -4,7 +4,6 @@ import enumeratum._
 import io.circe._
 import org.scalatest.FreeSpec
 import org.scalatest.Matchers._
-
 import scala.reflect.runtime.{universe => u}
 
 object JsonSchemaTest {
@@ -14,9 +13,10 @@ object JsonSchemaTest {
     getClass.getCanonicalName.replace('$', '.') +
       implicitly[u.WeakTypeTag[T]].tpe.typeSymbol.name
 
-  sealed trait F extends EnumEntry
-
   sealed trait ADT
+  case class A(a: Int, b: Char, c: Option[Double]) extends ADT
+  case class B(d: Symbol, e: Long) extends ADT
+  case class C(foo: Foo, g: Long) extends ADT
 
   sealed abstract class E extends EnumEntry
 
@@ -29,30 +29,22 @@ object JsonSchemaTest {
 
   case class X(e: E, f: F)
 
-  case class A(a: Int, b: Char, c: Option[Double]) extends ADT
-
-  case class B(d: Symbol, e: Long) extends ADT
-
-  case class C(foo: Foo, g: Long) extends ADT
-
   object E extends Enum[E] with EnumSchema[E] {
-
     override val values = findValues
-
     case object E1 extends E
-
     case object E2 extends E
   }
 
+  sealed trait F extends EnumEntry
   object F extends Enum[F] with EnumSchema[F] {
-
     override val values = findValues
-
     case object F1 extends F
-
     case object F2 extends F
   }
 
+  sealed trait TheEnum
+  case object Enum1 extends TheEnum
+  case object Enum2 extends TheEnum
 }
 
 class JsonSchemaTest extends FreeSpec {
@@ -88,7 +80,7 @@ class JsonSchemaTest extends FreeSpec {
       fooSchema.id should ===(id[Foo])
     }
 
-    "handles nested case classes" in {
+    "handles non primitive types" in {
       implicit val fs: JsonSchema[Foo] = fooSchema
 
       val schema = JsonSchema.deriveFor[Nested]
@@ -115,7 +107,7 @@ class JsonSchemaTest extends FreeSpec {
       schema.relatedDefinitions should ===(Set(fs.NamedDefinition("foo")))
     }
 
-    "handles nested case classes within options" in {
+    "handles non-primitive types as options" in {
       implicit val fs: JsonSchema[Foo] = fooSchema
 
       val schema = JsonSchema.deriveFor[NestedOpt]
@@ -146,8 +138,8 @@ class JsonSchemaTest extends FreeSpec {
         """
           sealed trait WontCompile extends EnumEntry
           object WontCompile extends Enum[WontCompile] {
-            object A extends WontCompile
-            object B extends WontCompile
+            case object A extends WontCompile
+            case object B extends WontCompile
             override def values = findValues
 
             val schema = JsonSchema.deriveFor[WontCompile]
@@ -155,7 +147,7 @@ class JsonSchemaTest extends FreeSpec {
 
         """.stripMargin shouldNot typeCheck
       }
-      "encodes enums when the EnumSchema[T] trait is extended" in {
+      "derives an enum when the EnumSchema[T] trait is extended" in {
         val schema = JsonSchema.deriveFor[X]
 
         parser.parse("""
@@ -176,6 +168,18 @@ class JsonSchemaTest extends FreeSpec {
                        |}
                        |
           """.stripMargin) should ===(Right(schema.asJson))
+      }
+    }
+    "with sealed traits of case objects" - {
+      "generates an enumerable" in {
+        val schema = JsonSchema.deriveFor[TheEnum]
+
+        schema.id should ===(id[TheEnum])
+        parser.parse("""
+          |{
+          |  "enum" : ["Enum1", "Enum2"]
+          |}
+        """.stripMargin) should ===(Right(schema.asJson))
       }
     }
 

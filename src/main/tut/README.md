@@ -61,55 +61,28 @@ Contact.schema.relatedDefinitions.map(_.id)
 
 #### Enums support
 
-Docless allows encoding any list of strings as JSON schema enums through the
-`JsonSchema.enum` method:
+Docless will automatically derive a Json schema enum for sum types
+consisting of case objects only:
 
 ```tut:silent
- sealed trait Diet {
-  def id: String
-}
+sealed trait Diet
 
-object Diet {
-  case object Herbivore extends Diet {
-    override val id = "herbivore"
-  }
-  case object Carnivore extends Diet {
-    override val id = "carnivore"
-  }
-  case object Omnivore extends Diet {
-    override val id = "omnivore"
-  }
-  
-  val values = Seq(Herbivore, Carnivore, Omnivore).map(_.id)
-  
-  implicit val schema = JsonSchema.enum(Diet.values)
-}
+case object Herbivore extends Diet
+case object Carnivore extends Diet
+case object Omnivore extends Diet
 ```
+Enumeration values can be automatically converted into a string identifier
+using one of the pre-defined formats.
+
 ```tut
-Diet.schema.asJson
+import com.timeout.docless.schema.PlainEnum.IdFormat
+
+implicit val format: IdFormat = IdFormat.SnakeCase
+val schema = JsonSchema.deriveFor[Diet]
+schema.asJson
 ```
 
-Types that extend [enumeratum](https://github.com/lloydmeta/enumeratum) `EnumEntry` are also supported through the `EnumSchema` trait:
-
-```tut:silent
-
-import enumeratum._
-import com.timeout.docless.schema.EnumSchema
-
-sealed trait RPS extends EnumEntry with EnumEntry.Snakecase 
-
-object RPS extends Enum[RPS] with EnumSchema[RPS] {
-  case object Rock extends RPS
-  case object Paper extends RPS
-  case object Scissors extends RPS
-  
-  override def values = findValues
-}
-```
-This trait will define on the companion object an implicit instance of `JsonSchema[RPS]`:
-```tut
-RPS.schema.asJson
-```
+Additionally, the popular library [enumeratum](https://github.com/lloydmeta/enumeratum) is also supported through the `EnumSchema` trait.
 
 ### Swagger DSL
 

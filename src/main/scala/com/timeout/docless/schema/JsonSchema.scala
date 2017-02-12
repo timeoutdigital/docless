@@ -157,8 +157,15 @@ object JsonSchema
   def enum[A: ru.WeakTypeTag](values: Seq[String]): JsonSchema[A] =
     inlineInstance(Map("enum" -> values.asJson).asJsonObject)
 
-  def enum[E <: EnumEntry](
-      e: Enum[E]
-  )(implicit ev: ru.WeakTypeTag[E]): JsonSchema[E] =
-    enum[E](e.values.map(_.entryName))
+  def enum[A <: Enumeration : ru.WeakTypeTag](a: A): JsonSchema[A] =
+    enum[A](a.values.map(_.toString).toList)
+
+  def enum[E <: EnumEntry](e: Enum[E])(implicit ev: ru.WeakTypeTag[E])
+    :JsonSchema[E] = enum[E](e.values.map(_.entryName))
+
+  implicit def coproductEnumSchema[A](
+    implicit
+    ev: PlainEnum[A],
+    format: PlainEnum.IdFormat,
+    tag: ru.WeakTypeTag[A]): JsonSchema[A] = JsonSchema.enum[A](ev.ids)
 }
