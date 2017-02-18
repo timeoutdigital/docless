@@ -59,6 +59,7 @@ object JsonSchema
     extends Primitives
     with derive.HListInstances
     with derive.CoprodInstances {
+
   trait HasRef {
     def id: String
     def asRef: Ref      = TypeRef(id, None)
@@ -157,8 +158,14 @@ object JsonSchema
   def enum[A: ru.WeakTypeTag](values: Seq[String]): JsonSchema[A] =
     inlineInstance(Map("enum" -> values.asJson).asJsonObject)
 
-  def enum[E <: EnumEntry](
-      e: Enum[E]
-  )(implicit ev: ru.WeakTypeTag[E]): JsonSchema[E] =
-    enum[E](e.values.map(_.entryName))
+  def enum[A <: Enumeration : ru.WeakTypeTag](a: A): JsonSchema[A] =
+    enum[A](a.values.map(_.toString).toList)
+
+  def enum[E <: EnumEntry](e: Enum[E])(implicit ev: ru.WeakTypeTag[E])
+    :JsonSchema[E] = enum[E](e.values.map(_.entryName))
+
+  def deriveEnum[A](implicit ev: PlainEnum[A], tag: ru.WeakTypeTag[A])
+    : JsonSchema[A] = enum[A](ev.ids)
+
+  def deriveFor[A](implicit ev: JsonSchema[A]): JsonSchema[A] = ev
 }

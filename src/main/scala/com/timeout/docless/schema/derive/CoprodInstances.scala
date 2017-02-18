@@ -16,12 +16,17 @@ trait CoprodInstances {
     instance { sys.error("Unreachable code JsonSchema[CNil]") }
 
   implicit def coproductSchema[H, T <: Coproduct, L <: Nat](
-      implicit lazyHSchema: Lazy[JsonSchema[H]],
-      tSchema: JsonSchema[T],
-      tLength: coproduct.Length.Aux[T, L],
-      ev: H <:!< EnumEntry
+    implicit lazyHSchema: Lazy[JsonSchema[H]],
+    tSchema: JsonSchema[T],
+    config: Config,
+    tLength: coproduct.Length.Aux[T, L],
+    ev: H <:!< EnumEntry
   ): JsonSchema[H :+: T] = {
-    val prop    = "allOf"
+
+    val prop    = config.schemaCombinator match {
+      case Combinator.AllOf => "allOf"
+      case Combinator.OneOf => "oneOf"
+    }
     val hSchema = lazyHSchema.value
     val hJson   = hSchema.asJsonRef
     instanceAndRelated {
@@ -37,9 +42,11 @@ trait CoprodInstances {
   }
 
   implicit def genericCoprodSchema[A, R <: Coproduct](
-      implicit gen: Generic.Aux[A, R],
-      rSchema: JsonSchema[R],
-      tag: ru.WeakTypeTag[A]
+    implicit
+    gen: Generic.Aux[A, R],
+    rSchema: JsonSchema[R],
+    config: Config,
+    tag: ru.WeakTypeTag[A]
   ): JsonSchema[A] =
     instanceAndRelated[A] {
       rSchema.jsonObject.+:(

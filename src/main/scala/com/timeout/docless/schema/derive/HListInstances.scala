@@ -50,5 +50,4 @@ trait HListInstances {
       ) -> rSchema.relatedDefinitions
     }
 
-  def deriveFor[A](implicit ev: JsonSchema[A]): JsonSchema[A] = ev
 }

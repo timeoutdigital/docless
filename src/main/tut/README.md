@@ -11,7 +11,6 @@ While being to some extent usable for Scala projects, [swagger-core](https://git
 Add the following to your `build.sbt`
 
 ```scala
-
 libraryDependencies += "com.timeout" %% "docless" % doclessVersion
 ```
 ### JSON schema derivation
@@ -38,61 +37,64 @@ The generated schema can be serialised to JSON by calling the `asJson` method, w
 
 ### Algebraic data types 
 
+Arguably, the idea of ADT or sum type is best expressed using JsonSchema _oneOf_ keyword. However, as Swagger UI seems to only support the `allOf`,
+this library uses the latter as default. This can be easily overriden by defining an implicit instance of `derive.Config` in the local scope:
+
+
 ```tut:silent
+import com.timeout.docless.schema.derive.{Config, Combinator}
+
 sealed trait Contact
 case class EmailAndPhoneNum(email: String, phoneNum: String) extends Contact
 case class EmailOnly(email: String) extends Contact
 case class PhoneOnly(phoneNum: String) extends Contact
 
 object Contact {
+  implicit val conf: Config = Config(Combinator.OneOf)
   val schema = JsonSchema.deriveFor[Contact]
 }
 ```
-Arguably, a correct JSON schema encoding for ADTs would use the _oneOf_ keyword. However, for historical reasons Swagger encodes these data types using _allOf_.
+
 ```tut
 Contact.schema.asJson
 ```
 
 For ADTs, as well as for case classes, the `JsonSchema.relatedDefinitions`
-method can be used to access the other definitions referenced in a schema:
+method can be used to access the child definitions referenced in a schema:
 ```tut
 Contact.schema.relatedDefinitions.map(_.id)
 ```
 
-#### Enums support
+#### Enumerable support
 
-Docless allows encoding any list of strings as JSON schema enums through the
-`JsonSchema.enum` method:
+Docless can automatically derive a Json schema enum for sum types consisting of case objects only:
 
 ```tut:silent
- sealed trait Diet {
-  def id: String
-}
 
-object Diet {
-  case object Herbivore extends Diet {
-    override val id = "herbivore"
-  }
-  case object Carnivore extends Diet {
-    override val id = "carnivore"
-  }
-  case object Omnivore extends Diet {
-    override val id = "omnivore"
-  }
-  
-  val values = Seq(Herbivore, Carnivore, Omnivore).map(_.id)
-  
-  implicit val schema = JsonSchema.enum(Diet.values)
-}
+sealed trait Diet
+
+case object Herbivore extends Diet
+case object Carnivore extends Diet
+case object Omnivore extends Diet
 ```
+Enumeration values can be automatically converted into a string identifier
+using one of the pre-defined formats.
+
+```tut:silent
+import com.timeout.docless.schema.PlainEnum.IdFormat
+
+implicit val format: IdFormat = IdFormat.SnakeCase
+val schema = JsonSchema.deriveEnum[Diet]
+```
+
 ```tut
-Diet.schema.asJson
+schema.asJson
 ```
 
-Types that extend [enumeratum](https://github.com/lloydmeta/enumeratum) `EnumEntry` are also supported through the `EnumSchema` trait:
+Types that extend [enumeratum](https://github.com/lloydmeta/enumeratum)
+`EnumEntry` are also supported through the `EnumSchema` trait:
 
 ```tut:silent
-
 import enumeratum._
 import com.timeout.docless.schema.EnumSchema
 
@@ -106,7 +108,10 @@ object RPS extends Enum[RPS] with EnumSchema[RPS] {
   override def values = findValues
 }
 ```
-This trait will define on the companion object an implicit instance of `JsonSchema[RPS]`:
+
+This trait will define on the companion object an implicit instance of
+`JsonSchema[RPS]`:
+
 ```tut
 RPS.schema.asJson
 ```
@@ -116,12 +121,14 @@ RPS.schema.asJson
 Docless provides a native scala implementation of the Swagger 2.0 model together with a DSL to easily manipulate and transform it.
 
 ```tut:invisible
-case class Error(code: Int, message: Option[String])
-val errSchema = JsonSchema.deriveFor[Error]
-val errorResponse = errSchema.asResponse("A server error")
+  case class Error(code: Int, message: Option[String])
+  val errSchema = JsonSchema.deriveFor[Error]
+  
+  val errorResponse = errSchema.asResponse("A server error")
 ```
 
 ```tut:silent
+
 import com.timeout.docless.swagger._
 import com.timeout.docless.schema._
 
@@ -169,7 +176,7 @@ object DinosRoute extends PathGroup {
   val dinoId = Parameter.path("id").as[Int]
   val dinoResp = dinoSchema.asResponse("A dinosaur!")
 
-  override def definitions = Nil // <= this should be Dino.defintions
+  override def definitions = Nil //<= this should be instead: `dinoSchema.definitions.toList`
 
   override def paths = List(
     "/dinos/{id}"
@@ -191,7 +198,6 @@ PathGroup.aggregate(apiInfo, List(PetsRoute, DinosRoute))
 
 The `aggregate` method will also verify that the schema definitions referenced either in endpoint responses or in body parameters can be resolved. In the example above, the method returns a non-empty list with a single `ResponseRef` error, pointing to the missing `Dino` definition. On correct inputs, the method will return instead the resulting `APISchema` wrapped into a `cats.data.Validated.Valid`.
 
-## Todo
+## Known issues
 
-- Review ADT support and possibly implement 'discriminator' fields as per Swagger 2.0 spec.
-- Handle recursive types (e.g. linked lists, trees)
+Currently Docless does not support recursive types (e.g. trees or linked lists). As a way around, one can always define them manually using the `JsonSchema.instance[A]` method.
