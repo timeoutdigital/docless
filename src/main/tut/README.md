@@ -91,10 +91,9 @@ val schema = JsonSchema.deriveEnum[Diet]
 schema.asJson
 ```
 
-Types that extend [enumeratum](https://github.com/lloydmeta/enumeratum)
-`EnumEntry` are also supported through the `EnumSchema` trait:
+Finally, types that extend [enumeratum](https://github.com/lloydmeta/enumeratum) `EnumEntry` are also supported through the `EnumSchema` trait:
 
-```tut:silent
+```scala
 import enumeratum._
 import com.timeout.docless.schema.EnumSchema
 
@@ -110,11 +109,7 @@ object RPS extends Enum[RPS] with EnumSchema[RPS] {
 ```
 
 This trait will define on the companion object an implicit instance of
-`JsonSchema[RPS]`:
-
-```tut
-RPS.schema.asJson
-```
+`JsonSchema[RPS]`.
 
 ### Swagger DSL
 

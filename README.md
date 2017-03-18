@@ -175,8 +175,9 @@ res10: io.circe.Json =
 }
 ```
 
-Types that extend [enumeratum](https://github.com/lloydmeta/enumeratum)\
-`EnumEntry` are also supported through the `EnumSchema` trait:
+Finally, types that extend
+[enumeratum](https://github.com/lloydmeta/enumeratum) `EnumEntry` are
+also supported through the `EnumSchema` trait:
 
 ``` {.scala}
 import enumeratum._
@@ -194,19 +195,7 @@ object RPS extends Enum[RPS] with EnumSchema[RPS] {
 ```
 
 This trait will define on the companion object an implicit instance of\
-`JsonSchema[RPS]`:
-
-``` {.scala}
-scala> RPS.schema.asJson
-res13: io.circe.Json =
-{
-  "enum" : [
-    "rock",
-    "paper",
-    "scissors"
-  ]
-}
-```
+`JsonSchema[RPS]`.
 
 ### Swagger DSL
 
@@ -294,7 +283,7 @@ scala> val apiInfo = Info("Example API")
 apiInfo: com.timeout.docless.swagger.Info = Info(Example API,1.0,None,None,None,None)
 
 scala> PathGroup.aggregate(apiInfo, List(PetsRoute, DinosRoute))
-res18: cats.data.ValidatedNel[com.timeout.docless.swagger.SchemaError,com.timeout.docless.swagger.APISchema] = Invalid(NonEmptyList(MissingDefinition(RefWithContext(TypeRef(Dino,None),ResponseContext(Get,/dinos/{id})))))
+res15: cats.data.ValidatedNel[com.timeout.docless.swagger.SchemaError,com.timeout.docless.swagger.APISchema] = Invalid(NonEmptyList(MissingDefinition(RefWithContext(TypeRef(Dino,None),ResponseContext(Get,/dinos/{id})))))
 ```
 
 The `aggregate` method will also verify that the schema definitions
