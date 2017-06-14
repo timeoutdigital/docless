@@ -35,7 +35,7 @@ Installation
 
 Add the following to your `build.sbt`
 
-``` {.scala}
+```scala
 libraryDependencies += "com.timeout" %% "docless" % doclessVersion
 ```
 
@@ -46,7 +46,7 @@ case classes and ADTs at compile time. By scraping unnecessary
 boilerplate code, this approach helps keeping documentation in sync with
 the relevant business entities.
 
-``` {.scala}
+```scala
 import com.timeout.docless.schema._
 
 case class Pet(id: Int, name: String, tag: Option[String])
@@ -59,7 +59,7 @@ val petSchema = JsonSchema.deriveFor[Pet]
 Given a case class, generating a JSON schema is as easy as calling the
 `deriveFor` method and supplying the class as type parameter.
 
-``` {.scala}
+```scala
 scala> petSchema.asJson
 res2: io.circe.Json =
 {
@@ -95,7 +95,7 @@ Arguably, the idea of ADT or sum type is best expressed using JsonSchema
 this library uses the latter as default. This can be easily overriden by
 defining an implicit instance of `derive.Config` in the local scope:
 
-``` {.scala}
+```scala
 import com.timeout.docless.schema.derive.{Config, Combinator}
 
 sealed trait Contact
@@ -109,7 +109,7 @@ object Contact {
 }
 ```
 
-``` {.scala}
+```scala
 scala> Contact.schema.asJson
 res5: io.circe.Json =
 {
@@ -133,7 +133,7 @@ For ADTs, as well as for case classes, the
 method can be used to access the child definitions referenced in a
 schema:
 
-``` {.scala}
+```scala
 scala> Contact.schema.relatedDefinitions.map(_.id)
 res6: scala.collection.immutable.Set[String] = Set(PhoneOnly, EmailOnly, EmailAndPhoneNum)
 ```
@@ -143,7 +143,7 @@ res6: scala.collection.immutable.Set[String] = Set(PhoneOnly, EmailOnly, EmailAn
 Docless can automatically derive a Json schema enum for sum types
 consisting of case objects only:
 
-``` {.scala}
+```scala
 
 sealed trait Diet
 
@@ -156,14 +156,14 @@ Enumeration values can be automatically converted into a string
 identifier\
 using one of the pre-defined formats.
 
-``` {.scala}
+```scala
 import com.timeout.docless.schema.PlainEnum.IdFormat
 
 implicit val format: IdFormat = IdFormat.SnakeCase
 val schema = JsonSchema.deriveEnum[Diet]
 ```
 
-``` {.scala}
+```scala
 scala> schema.asJson
 res10: io.circe.Json =
 {
@@ -179,7 +179,7 @@ Finally, types that extend
 [enumeratum](https://github.com/lloydmeta/enumeratum) `EnumEntry` are
 also supported through the `EnumSchema` trait:
 
-``` {.scala}
+```scala
 import enumeratum._
 import com.timeout.docless.schema.EnumSchema
 
@@ -202,7 +202,7 @@ This trait will define on the companion object an implicit instance of\
 Docless provides a native scala implementation of the Swagger 2.0 model
 together with a DSL to easily manipulate and transform it.
 
-``` {.scala}
+```scala
 
 import com.timeout.docless.swagger._
 import com.timeout.docless.schema._
@@ -248,7 +248,7 @@ generic facility to enrich separate code modules with Swagger metadata,
 being these routes, controllers, or whatever else your framework calls
 them.
 
-``` {.scala}
+```scala
 import com.timeout.docless.swagger._
 
 case class Dino(name: String, extinctedSinceYears: Long, diet: Diet)
@@ -278,7 +278,7 @@ of endpoint paths and schema definitions. The `aggregate` method in the
 `PathGroup` companion object can then be used to merge the supplied
 groups into a single Swagger API description.
 
-``` {.scala}
+```scala
 scala> val apiInfo = Info("Example API")
 apiInfo: com.timeout.docless.swagger.Info = Info(Example API,1.0,None,None,None,None)
 
