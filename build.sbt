@@ -16,7 +16,7 @@ val readmePath = file(".") / readme
 
 scalaVersion := "2.12.4"
 
-crossScalaVersions := Seq("2.11.11", "2.12.4")
+crossScalaVersions := Seq("2.11.9", "2.12.4")
 
 useGpg := true
 useGpgAgent := true
