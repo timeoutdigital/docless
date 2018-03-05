@@ -1,8 +1,8 @@
 # See http://about.travis-ci.org/docs/user/build-configuration/
 language: scala
 scala:
-  - 2.11.8
-  - 2.12.1
+  - 2.11.11
+  - 2.12.4
 jdk:
   - oraclejdk8
 before_install:
