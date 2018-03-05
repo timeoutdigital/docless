@@ -14,7 +14,7 @@ case class Path(id: String,
 
   def paramRefs: Set[RefWithContext] =
     parameters.flatMap(paramRef).toSet ++
-      operations.foldMap(_.parameters.flatMap(paramRef))
+      operations.values.toList.foldMap(_.parameters.flatMap(paramRef))
 
   def responseRefs: Set[RefWithContext] =
     operations.flatMap {
