@@ -5,32 +5,40 @@ name := "docless"
 
 version := "0.6.0-SNAPSHOT"
 
-val circeVersion      = "0.7.0"
-val enumeratumVersion = "1.5.7"
-val catsVersion       = "0.9.0"
+val circeVersion      = "0.9.1"
+val enumeratumVersion = "1.5.12"
+val catsVersion       = "1.0.1"
+val shapelessVersion  = "2.3.3"
+val ammoniteVersion   = "1.0.5"
 
 val readme     = "README.md"
 val readmePath = file(".") / readme
 
-scalaVersion := "2.12.1"
+scalaVersion := "2.12.4"
 
-crossScalaVersions := Seq("2.11.8", "2.12.1")
+crossScalaVersions := Seq("2.11.11", "2.12.4")
 
 useGpg := true
 useGpgAgent := true
 
+enablePlugins(TutPlugin)
+
+scalacOptions += "-Ypartial-unification"
+
 libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-reflect"         % scalaVersion.value,
-  "com.chuusai"    %% "shapeless"            % "2.3.2",
+  "com.chuusai"    %% "shapeless"            % shapelessVersion,
   "com.beachape"   %% "enumeratum"           % enumeratumVersion,
-  "com.beachape"   %% "enumeratum-circe"     % "1.5.9",
-  "org.typelevel"  %% "cats"                 % catsVersion,
+  "com.beachape"   %% "enumeratum-circe"     % enumeratumVersion,
+  "org.typelevel"  %% "cats-core"            % catsVersion,
+  "org.typelevel"  %% "cats-kernel"          % catsVersion,
+  "org.typelevel"  %% "cats-macros"          % catsVersion,
   "io.circe"       %% "circe-core"           % circeVersion,
   "io.circe"       %% "circe-parser"         % circeVersion,
   "io.circe"       %% "circe-generic"        % circeVersion,
-  "org.scalatest"  %% "scalatest"            % "3.0.0" % "test",
+  "org.scalatest"  %% "scalatest"            % "3.0.5" % "test",
   "com.github.fge" % "json-schema-validator" % "2.2.6" % "test",
-  "com.lihaoyi"    % "ammonite"              % "0.8.1" % "test" cross CrossVersion.full
+  "com.lihaoyi"    % "ammonite"              % ammoniteVersion % "test" cross CrossVersion.full
 )
 
 val predef = Seq(
@@ -66,20 +74,18 @@ copyReadme := {
 val pandocReadme =
   taskKey[Unit](s"Add a table of content to the README using pandoc")
 
-pandocReadme := {
-  val readme = copyReadme.value
-  val log    = streams.value.log
-  val cmd =
-    s"pandoc -B doc/header.md -f markdown_github --toc -s -S $readme -o $readme"
-  log.info(s"Running pandoc: $cmd}")
-  try { Process(cmd) ! log } catch {
-    case e: java.io.IOException =>
-      log.error(
-        "You might need to install the pandoc executable! Please follow instructions here: http://pandoc.org/installing.html"
-      )
-      throw e
-  }
-
-}
-
-tutSettings
+ pandocReadme := {
+   val readme = copyReadme.value
+   val log    = streams.value.log
+   val cmd =
+     s"pandoc -B doc/header.md -f markdown_github --toc -s -S $readme -o $readme"
+   log.info(s"Running pandoc: $cmd}")
+   try { new Fork(cmd, None) } catch {
+     case e: java.io.IOException =>
+       log.error(
+         "You might need to install the pandoc executable! Please follow instructions here: http://pandoc.org/installing.html"
+       )
+       throw e
+   }
+ 
+ }

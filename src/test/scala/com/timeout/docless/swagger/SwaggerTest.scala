@@ -13,7 +13,7 @@ class SwaggerTest extends FreeSpec {
     val petstoreSchema = PetstoreSchema()
     val json           = JsonLoader.fromResource("/swagger-schema.json")
     val schema         = JsonSchemaFactory.byDefault().getJsonSchema(json)
-    val printer        = Printer.spaces2.copy(dropNullKeys = true)
+    val printer        = Printer.spaces2.copy(dropNullValues = true)
     val jsonS          = printer.pretty(petstoreSchema.asJson)
     val report         = schema.validate(JsonLoader.fromString(jsonS))
     val err            = System.err
