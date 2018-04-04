@@ -12,8 +12,7 @@ object JsonSchemaTest {
   val ref = "$ref"
 
   def id[T: u.WeakTypeTag] =
-    getClass.getCanonicalName.replace('$', '.') +
-      implicitly[u.WeakTypeTag[T]].tpe.typeSymbol.name
+    JsonSchema.tagId(implicitly[u.WeakTypeTag[T]])
 
   sealed abstract class E extends EnumEntry
 

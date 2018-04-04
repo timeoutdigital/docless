@@ -117,7 +117,8 @@ object JsonSchema
   }
 
   def tagId[A](tag: ru.WeakTypeTag[A]): String =
-    tag.tpe.toString
+    tag.tpe.typeSymbol.name +
+      (if (tag.tpe.typeArgs.nonEmpty) "[" + tag.tpe.typeArgs.map(_.typeSymbol.name).mkString(",") + "]" else "")
 
   def instance[A](
       obj: => JsonObject
