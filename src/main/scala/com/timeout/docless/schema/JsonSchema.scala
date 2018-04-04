@@ -116,11 +116,14 @@ object JsonSchema
       fromRegex[K](".*".r)
   }
 
+  def tagId[A](tag: ru.WeakTypeTag[A]): String =
+    tag.tpe.toString
+
   def instance[A](
       obj: => JsonObject
   )(implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] =
     new JsonSchema[A] {
-      override def id                 = tag.tpe.typeSymbol.fullName
+      override def id                 = tagId(tag)
       override def inline             = false
       override def jsonObject         = obj
       override def relatedDefinitions = Set.empty
@@ -130,7 +133,7 @@ object JsonSchema
       obj: => JsonObject
   )(implicit tag: ru.WeakTypeTag[A]): JsonSchema[F[A]] =
     new JsonSchema[F[A]] {
-      override def id                 = tag.tpe.typeSymbol.fullName
+      override def id                 = tagId(tag)
       override def inline             = false
       override def jsonObject         = obj
       override def relatedDefinitions = Set.empty
@@ -139,7 +142,7 @@ object JsonSchema
   def instanceAndRelated[A](
       pair: => (JsonObject, Set[Definition])
   )(implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] = new JsonSchema[A] {
-    override def id                 = tag.tpe.typeSymbol.fullName
+    override def id                 = tagId(tag)
     override def inline             = false
     override def jsonObject         = pair._1
     override def relatedDefinitions = pair._2
@@ -149,7 +152,7 @@ object JsonSchema
       obj: => JsonObject
   )(implicit tag: ru.WeakTypeTag[A]): JsonSchema[A] =
     new JsonSchema[A] {
-      override def id                 = tag.tpe.typeSymbol.fullName
+      override def id                 = tagId(tag)
       override def inline             = true
       override def relatedDefinitions = Set.empty
       override def jsonObject         = obj

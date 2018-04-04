@@ -32,7 +32,7 @@ case class APISchema(
 
 object APISchema {
 
-    implicit val externalDocsEncoder: Encoder[ExternalDocs] =
+  implicit val externalDocsEncoder: Encoder[ExternalDocs] =
     deriveEncoder[ExternalDocs]
   implicit val contactEncoder: Encoder[Info.Contact] =
     deriveEncoder[Info.Contact]

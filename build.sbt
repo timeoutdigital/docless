@@ -6,8 +6,9 @@ name := "docless"
 version := "0.6.0-SNAPSHOT"
 
 val circeVersion      = "0.9.1"
-val enumeratumVersion = "1.5.12"
-val catsVersion       = "1.0.1"
+val enumeratumVersion = "1.5.13"
+val enumeratumCirceVersion = "1.5.17"
+val catsVersion       = "1.1.0"
 val shapelessVersion  = "2.3.3"
 val ammoniteVersion   = "1.0.5"
 
@@ -29,7 +30,7 @@ libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-reflect"         % scalaVersion.value,
   "com.chuusai"    %% "shapeless"            % shapelessVersion,
   "com.beachape"   %% "enumeratum"           % enumeratumVersion,
-  "com.beachape"   %% "enumeratum-circe"     % enumeratumVersion,
+  "com.beachape"   %% "enumeratum-circe"     % enumeratumCirceVersion,
   "org.typelevel"  %% "cats-core"            % catsVersion,
   "org.typelevel"  %% "cats-kernel"          % catsVersion,
   "org.typelevel"  %% "cats-macros"          % catsVersion,

@@ -70,8 +70,7 @@ trait Primitives {
       ).asJsonObject
     )
 
-  implicit def listSchema[A: JsonSchema]: JsonSchema[List[A]] = {
-    val schema = implicitly[JsonSchema[A]]
+  implicit def listSchema[A: JsonSchema](implicit schema: JsonSchema[A], tag: ru.WeakTypeTag[A]): JsonSchema[List[A]] = {
     inlineInstance[List[A]](
       JsonObject.fromMap(
         Map(

@@ -136,6 +136,23 @@ class JsonSchemaTest extends FreeSpec {
       schema.relatedDefinitions should ===(Set(fs.NamedDefinition("fooOpt")))
     }
 
+    "handles list of non-primitive types" in {
+      implicit val fs: JsonSchema[Foo] = fooSchema
+
+      val schema = JsonSchema.deriveFor[List[Foo]]
+      parser.parse(s"""
+                      |{
+                      |  "type": "array",
+                      |  "items":  {
+                      |    "$ref" : "#/definitions/${id[Foo]}"
+                      |  }
+                      |}
+                      |
+          """.stripMargin) should ===(Right(schema.asJson))
+
+      schema.id should ===(id[List[Foo]])
+    }
+
     "with types extending enumeratum.EnumEntry" - {
       "does not derive automatically" in {
         """
